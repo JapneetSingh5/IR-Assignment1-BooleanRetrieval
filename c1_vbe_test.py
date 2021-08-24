@@ -20,7 +20,7 @@ def VBDecode(bytes):
     n = n*128 + bytes[len(bytes)-1]
     return n
 
-destFile = open("indexTest.idx", "wb")
+destFile = open("c1_index_test.idx", "wb")
 for i in range(1, 1000):
     encoded = VBEncode(i)
     for j in range(0, len(encoded)):
@@ -29,7 +29,7 @@ for i in range(1, 1000):
 destFile.close()
 
 
-with open("indexTest.idx", "rb") as f:
+with open("c1_index_test.idx", "rb") as f:
         decoded = 0
         while(True):
             byte = f.read(1)
@@ -42,6 +42,10 @@ with open("indexTest.idx", "rb") as f:
                 decoded = 0
             else:
                 decoded = decoded*128 + (readByte-128)
+
+txtFile =  open("c1_index_test.txt", "w")
+for i in range(0, 1000):
+    txtFile.write(str(i))
         
 
 
