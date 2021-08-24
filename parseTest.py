@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from nltk.stem import PorterStemmer
+from stemmer import PorterStemmer
 import re
 
 xmldoc = open('./tipster-ap-frac/ap880212', 'r').read()
@@ -18,7 +18,7 @@ for doc in docs:
             temp = re.sub(r'[^\w\s]', '', head.get_text())
             temp = temp.split(' ')
             for word in temp:
-                print(ps.stem(word))
+                print(ps.stem(word, 0, len(word)-1))
 
 
 # print('DOC count: '+str(len(docs)))
