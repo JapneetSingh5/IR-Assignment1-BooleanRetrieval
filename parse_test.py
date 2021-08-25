@@ -15,8 +15,9 @@ for doc in docs:
         print(docNo.get_text().replace(' ', ''))
         for head in heads:
             print(head.get_text())
-            temp = re.sub(r'[^\w\s]', '', head.get_text())
-            temp = temp.split(' ')
+            # temp = re.sub(r'[^\w\s]', '', head.get_text().lower())
+            # temp = temp.split()
+            temp = re.split('\s|(?<!\d)[,.]|[,.](?!\d)', head.get_text().lower())
             for word in temp:
                 print(ps.stem(word, 0, len(word)-1))
 

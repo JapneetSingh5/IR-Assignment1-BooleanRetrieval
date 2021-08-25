@@ -42,6 +42,8 @@ def C2Decode(encoded):
         i = i+1
     return x
 
+# https://gist.github.com/jogonba2/0a813e1b6a4d437a6dfe
+
 # encoded = C2Encode(13)
 # decoded = C2Decode(encoded)
 # print(str(encoded) + " " + str(decoded))
