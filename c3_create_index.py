@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from stemmer import PorterStemmer
 from collections import defaultdict
-from c1_vbe_test import VBEncode, VBDecode
+import snappy
 import sys
 import re
 import os
@@ -17,7 +17,7 @@ count = 0
 lastDoc = defaultdict(int)
 offsets = defaultdict(int)
 lenpl = defaultdict(int)
-
+iter = 0
 filecount = 0
 doclist = sorted(os.listdir('tipster-ap-frac'))
 total = len(doclist)
@@ -26,8 +26,7 @@ for file in doclist:
     f = os.path.join('tipster-ap-frac', file)
     if(file=='ap890520'): 
         continue
-    # if(file=='ap890104'): 
-    #     break
+    iter+=1
     xmldoc = open(f, 'r').read()
     soup = BeautifulSoup('<JAPNEET>' + xmldoc + '</JAPNEET>', 'xml')
     docs = soup.find_all('DOC')
@@ -69,23 +68,26 @@ for file in doclist:
 
 byteCount = 0
 cOffset = 0
-destFile = open("c1_index_gap.idx", "wb")
+destFile = open("c3_index_gap.idx", "wb")
 for key in postings.keys():
     offsets[key]=cOffset
     pl = postings[key]
+    toWrite = ''
     for post in pl:
-        encoded = VBEncode(post)
-        for j in range(0, len(encoded)):
-            toWrite = encoded[j].to_bytes(1, sys.byteorder)
-            cOffset+=1
-            lenpl[key]+=1
-            destFile.write(toWrite)
+        toWrite+=str(post)
+        toWrite+=' '
+    toWrite = toWrite.encode()
+    toWrite=snappy.compress(toWrite)
+    # print(toWrite)
+    destFile.write(toWrite)
+    cOffset+=len(toWrite)
+    lenpl[key]=len(toWrite)
 
-with open("c1_offsets", "w") as fp:
+with open("c3_offsets", "w") as fp:
     json.dump(offsets,fp) 
 
-with open("c1_lenpl", "w") as fp:
+with open("c3_lenpl", "w") as fp:
     json.dump(lenpl,fp) 
 
-with open("c1_docid", "w") as fp:
+with open("c3_docid", "w") as fp:
     json.dump(docId,fp) 

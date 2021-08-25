@@ -16,13 +16,13 @@ docId = json.load(f)
 
 list1 = []
 list2 = []
-offset1 = offsets['pete']
+offset1 = offsets['reagan']
 offset2 = offsets['i']
 with open("c1_index_gap.idx", "rb") as f:
         decoded = 0
         totalDecoded = 0
         f.seek(offset1)
-        while(totalDecoded<lenpl['pete']):
+        while(totalDecoded<lenpl['reagan']):
             byte = f.read(1)
             totalDecoded += 1
             if(not byte):
@@ -63,10 +63,11 @@ if(len1>0):
     t1=list1[0]
 if(len2>0):
     t2=list2[0]
+f1 = open('c1_output.txt', 'w')
 while(i<len1 and j<len2):
-    # print(t1, t2)
+    # print(t1, t2, file=f1)
     if(t1==t2):
-        print(docId[str(t1)])
+        print(docId[str(t1)], file=f1)
         i+=1
         j+=1
         if(i<len1):
