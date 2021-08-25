@@ -26,8 +26,8 @@ for file in doclist:
     f = os.path.join('tipster-ap-frac', file)
     if(file=='ap890520'): 
         continue
-    # if(file=='ap890104'): 
-    #     break
+    if(file=='ap890104'): 
+        break
     xmldoc = open(f, 'r').read()
     soup = BeautifulSoup('<JAPNEET>' + xmldoc + '</JAPNEET>', 'xml')
     docs = soup.find_all('DOC')
@@ -44,7 +44,7 @@ for file in doclist:
                 # print(head.get_text())
                 # temp = re.sub(r'[^\w\s]', '', head.get_text().lower())
                 # temp = temp.split()
-                temp = re.split('\s|(?<!\d)[,.]|[,.](?!\d)', head.get_text())
+                temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', head.get_text())
                 for word in temp:
                     stemmed = ps.stem(word.lower(), 0, len(word)-1)
                     # print(stemmed)

@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from stemmer import PorterStemmer
 from collections import defaultdict
-import snappy
+from c2_logx_test import C2Encode, C2Decode
 import sys
 import re
 import os
@@ -26,9 +26,9 @@ for file in doclist:
     f = os.path.join('tipster-ap-frac', file)
     if(file=='ap890520'): 
         continue
-    # iter+=1
-    # if(iter>10):
-    #     break
+    iter+=1
+    if(iter>10):
+        break
     xmldoc = open(f, 'r').read()
     soup = BeautifulSoup('<JAPNEET>' + xmldoc + '</JAPNEET>', 'xml')
     docs = soup.find_all('DOC')
@@ -42,9 +42,6 @@ for file in doclist:
         docId[count] = id
         if(len(heads)>0):
             for head in heads:
-                # print(head.get_text())
-                # temp = re.sub(r'[^\w\s]', '', head.get_text().lower())
-                # temp = temp.split()
                 temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', head.get_text())
                 for word in temp:
                     stemmed = ps.stem(word.lower(), 0, len(word)-1)
@@ -70,26 +67,30 @@ for file in doclist:
 
 byteCount = 0
 cOffset = 0
-destFile = open("c3_index_gap.idx", "wb")
+destFile = open("c2_index_gap.idx", "wb")
 for key in postings.keys():
     offsets[key]=cOffset
     pl = postings[key]
     toWrite = ''
     for post in pl:
-        toWrite+=str(post)
-        toWrite+=' '
-    toWrite = toWrite.encode()
-    toWrite=snappy.compress(toWrite)
+        toWrite+=C2Encode(post)
     # print(toWrite)
-    destFile.write(toWrite)
-    cOffset+=len(toWrite)
-    lenpl[key]=len(toWrite)
+    padding = (8 - (len(toWrite)%8))%8
+    toWrite+=('1'*padding)
+    bytesList = [toWrite[i:i+8] for i in range(0, len(toWrite), 8)]
+    bytesList = [int(ele, 2) for ele in bytesList]
+    # print(bytesList)
+    cOffset+=len(bytesList)
+    lenpl[key]=len(bytesList)
+    for posting in bytesList:
+        finalToWrite = posting.to_bytes(1, sys.byteorder)
+        destFile.write(finalToWrite)
 
-with open("c3_offsets", "w") as fp:
+with open("c2_offsets", "w") as fp:
     json.dump(offsets,fp) 
 
-with open("c3_lenpl", "w") as fp:
+with open("c2_lenpl", "w") as fp:
     json.dump(lenpl,fp) 
 
-with open("c3_docid", "w") as fp:
+with open("c2_docid", "w") as fp:
     json.dump(docId,fp) 

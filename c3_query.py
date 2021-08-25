@@ -17,11 +17,11 @@ docId = json.load(f)
 
 list1 = []
 list2 = []
-offset1 = offsets['reagan']
+offset1 = offsets['simon']
 offset2 = offsets['i']
 with open("c3_index_gap.idx", "rb") as f:
         f.seek(offset1)
-        comp = f.read(lenpl['reagan'])
+        comp = f.read(lenpl['simon'])
         # print(comp)
         uncomp = snappy.uncompress(comp)
         strList1 = uncomp.decode('utf8')

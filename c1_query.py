@@ -16,13 +16,13 @@ docId = json.load(f)
 
 list1 = []
 list2 = []
-offset1 = offsets['reagan']
+offset1 = offsets['simon']
 offset2 = offsets['i']
 with open("c1_index_gap.idx", "rb") as f:
         decoded = 0
         totalDecoded = 0
         f.seek(offset1)
-        while(totalDecoded<lenpl['reagan']):
+        while(totalDecoded<lenpl['simon']):
             byte = f.read(1)
             totalDecoded += 1
             if(not byte):
