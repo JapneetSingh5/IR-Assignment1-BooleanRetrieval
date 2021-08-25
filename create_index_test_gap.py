@@ -1,7 +1,9 @@
 from bs4 import BeautifulSoup
 from stemmer import PorterStemmer
 from collections import defaultdict
+from c1_vbe_test import VBEncode, VBDecode
 import pprint
+import sys
 import re
 
 xmldoc = open('./tipster-ap-frac/ap880212', 'r').read()
@@ -12,6 +14,8 @@ docId = {}
 postings = defaultdict(list)
 count = 0
 lastDoc = defaultdict(int)
+offsets = defaultdict(int)
+lenpl = defaultdict(int)
 pp = pprint.PrettyPrinter()
 
 for doc in docs:
@@ -46,11 +50,60 @@ for doc in docs:
                     lastDoc[stemmed]=count   
                 elif(lastDoc[stemmed]!=count):
                     postings[stemmed].append(count-lastDoc[stemmed]) 
-                    lastDoc[stemmed]=count   
-                               
+                    lastDoc[stemmed]=count  
 
-list1 = postings['simon']
-list2 = postings['i']
+byteCount = 0
+cOffset = 0
+destFile = open("c1_index_gap.idx", "wb")
+for key in sorted(postings.keys()):
+    offsets[key]=cOffset
+    pl = postings[key]
+    for post in pl:
+        encoded = VBEncode(post)
+        for j in range(0, len(encoded)):
+            toWrite = encoded[j].to_bytes(1, sys.byteorder)
+            cOffset+=1
+            lenpl[key]+=1
+            destFile.write(toWrite)
+# print(offsets)
+
+list1 = []
+list2 = []
+offset1 = offsets['simon']
+offset2 = offsets['i']
+with open("c1_index_gap.idx", "rb") as f:
+        decoded = 0
+        totalDecoded = 0
+        f.seek(offset1)
+        while(totalDecoded<lenpl['simon']):
+            byte = f.read(1)
+            totalDecoded += 1
+            if(not byte):
+                break
+            readByte = int.from_bytes(byte, sys.byteorder)
+            if(readByte<128):
+                decoded = decoded*128 + readByte
+                list1.append(decoded)
+                decoded = 0
+            else:
+                decoded = decoded*128 + (readByte-128)
+
+with open("c1_index_gap.idx", "rb") as f:
+        decoded = 0
+        totalDecoded = 0
+        f.seek(offset2)
+        while(totalDecoded<lenpl['i']):
+            byte = f.read(1)
+            totalDecoded += 1
+            if(not byte):
+                break
+            readByte = int.from_bytes(byte, sys.byteorder)
+            if(readByte<128):
+                decoded = decoded*128 + readByte
+                list2.append(decoded)
+                decoded = 0
+            else:
+                decoded = decoded*128 + (readByte-128)
 print(list1)
 print(list2)
 len1 = len(list1)
