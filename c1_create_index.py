@@ -26,8 +26,8 @@ for file in doclist:
     f = os.path.join('tipster-ap-frac', file)
     if(file=='ap890520'): 
         continue
-    if(file=='ap890104'): 
-        break
+    # if(file=='ap890104'): 
+    #     break
     xmldoc = open(f, 'r').read()
     soup = BeautifulSoup('<JAPNEET>' + xmldoc + '</JAPNEET>', 'xml')
     docs = soup.find_all('DOC')

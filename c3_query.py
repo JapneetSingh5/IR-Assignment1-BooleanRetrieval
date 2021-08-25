@@ -17,11 +17,13 @@ docId = json.load(f)
 
 list1 = []
 list2 = []
-offset1 = offsets['simon']
-offset2 = offsets['i']
+term1 = 'simon'
+term2 = 'i'
+offset1 = offsets[term1]
+offset2 = offsets[term2]
 with open("c3_index_gap.idx", "rb") as f:
         f.seek(offset1)
-        comp = f.read(lenpl['simon'])
+        comp = f.read(lenpl[term1])
         # print(comp)
         uncomp = snappy.uncompress(comp)
         strList1 = uncomp.decode('utf8')
@@ -31,7 +33,7 @@ with open("c3_index_gap.idx", "rb") as f:
 
 with open("c3_index_gap.idx", "rb") as f:
         f.seek(offset2)
-        comp = f.read(lenpl['i'])
+        comp = f.read(lenpl[term2])
         # print(comp)
         uncomp = snappy.decompress(comp)
         strList2 = uncomp.decode('utf8')

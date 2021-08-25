@@ -16,26 +16,28 @@ docId = json.load(f)
 
 list1 = []
 list2 = []
-offset1 = offsets['simon']
-offset2 = offsets['i']
+term1 = 'simon'
+term2 = 'i'
+offset1 = offsets[term1]
+offset2 = offsets[term2]
 with open("c2_index_gap.idx", "rb") as f:
         f.seek(offset1)
         uncomp = ''
         i = 0
-        while(i<lenpl['simon']):
+        while(i<lenpl[term1]):
             nextByte = f.read(1)
             uncomp += '{0:08b}'.format(int.from_bytes(nextByte, sys.byteorder))
             i+=1
         # print(uncomp)
         iter = 0
-        while(iter<lenpl['simon']*8):
+        while(iter<lenpl[term1]*8):
             cLen = 0
             while(uncomp[iter]!='0'):
                 cLen+=1
                 iter+=1
-                if(iter>=lenpl['simon']*8):
+                if(iter>=lenpl[term1]*8):
                     break
-            if(iter>=lenpl['simon']*8 and uncomp[-1]=='1'):
+            if(iter>=lenpl[term1]*8 and uncomp[-1]=='1'):
                 break
             iter+=1
             cLen+=1
@@ -58,20 +60,20 @@ with open("c2_index_gap.idx", "rb") as f:
         f.seek(offset2)
         uncomp = ''
         i = 0
-        while(i<lenpl['i']):
+        while(i<lenpl[term2]):
             nextByte = f.read(1)
             uncomp += '{0:08b}'.format(int.from_bytes(nextByte, sys.byteorder))
             i+=1
         # print(uncomp)
         iter = 0
-        while(iter<lenpl['i']*8):
+        while(iter<lenpl[term2]*8):
             cLen = 0
             while(uncomp[iter]!='0'):
                 cLen+=1
                 iter+=1
-                if(iter>=lenpl['i']*8):
+                if(iter>=lenpl[term2]*8):
                     break
-            if(iter>=lenpl['i']*8 and uncomp[-1]=='1'):
+            if(iter>=lenpl[term2]*8 and uncomp[-1]=='1'):
                 break
             iter+=1
             cLen+=1
