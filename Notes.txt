@@ -1,0 +1,24 @@
+26/8
+
+1. Indexing is pretty slow right now, lets look for possible bottlenecks and benchmark:
+
+Time taken to index 20 files using C1 as is 
+(commmit made on morning on 26th): 20s
+Time taken to index 20 files using C1 with 'lxml' instead of 'xml' in bs4 : <20s 
+
+Time taken to index all 686 files using C1 as is ('xml' + bs4)
+(commmit made on morning on 26th): takes 15min10s
+Time taken to index all 686 files using C1 with 'lxml' instead of 'xml' in bs4 : 14min 10s 
+
+-> Speed up factor: use lxml instead of xml, why does this work better? FIND OUT
+
+2. Parsing : https://towardsdatascience.com/how-to-efficiently-remove-punctuations-from-a-string-899ad4a059fb
+
+re based method works really slow wrt translate, possible efficiency boost.
+
+3. I am sorting the directory list, is it really required?
+
+With sorting + lxml : 14min10s
+Without sort + lxml: 12min22s
+Are results still the same? (Should be, but still good to check) almost :(
+-> Speed up factor: don't sort directory list, are results reqd to be sorted? FIND OUT

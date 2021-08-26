@@ -19,31 +19,26 @@ offsets = defaultdict(int)
 lenpl = defaultdict(int)
 
 filecount = 0
-doclist = sorted(os.listdir('tipster-ap-frac'))
+doclist = os.listdir('tipster-ap-frac')
 total = len(doclist)
 for file in doclist:
     filecount += 1
     f = os.path.join('tipster-ap-frac', file)
     if(file=='ap890520'): 
         continue
-    # if(file=='ap890104'): 
-    #     break
     xmldoc = open(f, 'r').read()
-    soup = BeautifulSoup('<JAPNEET>' + xmldoc + '</JAPNEET>', 'xml')
-    docs = soup.find_all('DOC')
+    soup = BeautifulSoup('<JAPNEET>' + xmldoc + '</JAPNEET>', 'lxml')
+    docs = soup.find_all('doc')
     print('Processing ', f, '( ', filecount, ' out of ', total, ' processed )')
     for doc in docs:
         count += 1
-        docNo = doc.find('DOCNO')
-        heads = doc.find_all('HEAD')
-        texts = doc.find_all('TEXT')
+        docNo = doc.find('docno')
+        heads = doc.find_all('head')
+        texts = doc.find_all('text')
         id = docNo.get_text().replace(' ', '')
         docId[count] = id
         if(len(heads)>0):
             for head in heads:
-                # print(head.get_text())
-                # temp = re.sub(r'[^\w\s]', '', head.get_text().lower())
-                # temp = temp.split()
                 temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', head.get_text())
                 for word in temp:
                     stemmed = ps.stem(word.lower(), 0, len(word)-1)
