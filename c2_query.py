@@ -1,43 +1,51 @@
 from bs4 import BeautifulSoup
 from stemmer import PorterStemmer
 from collections import defaultdict
-from c1_vbe_test import VBEncode, VBDecode
 import sys
 import json
 import re
 import os
 
-f = open('c2_offsets',)
-offsets = json.load(f)
-f = open('c2_lenpl',)
-lenpl = json.load(f)
-f = open('c2_docid',)
-docId = json.load(f)
+f = open('c2_offsetAndLength', 'r')
+offsetAndLength = json.load(f)
+docId = {}
+DocIdMapLength = offsetAndLength['DocIdMapLength']
+indexFile = 'c2_index_gap.idx'
+
+with open(indexFile, "rb") as f:
+    jsonEncoded = f.read(DocIdMapLength)
+    jsonEncoded.decode('utf-8')
+    docId= json.loads(jsonEncoded)
+
+ps = PorterStemmer()
 
 list1 = []
 list2 = []
-term1 = 'simon'
-term2 = 'i'
-offset1 = offsets[term1]
-offset2 = offsets[term2]
+term1 = 'panda'
+term1 = ps.stem(term1.lower(), 0, len(term1)-1)
+term2 = 'india'
+term2= ps.stem(term2.lower(), 0, len(term2)-1)
+offset1 = offsetAndLength[term1][0]
+offset2 = offsetAndLength[term2][0]
+
 with open("c2_index_gap.idx", "rb") as f:
         f.seek(offset1)
         uncomp = ''
         i = 0
-        while(i<lenpl[term1]):
+        while(i<offsetAndLength[term1][1]):
             nextByte = f.read(1)
             uncomp += '{0:08b}'.format(int.from_bytes(nextByte, sys.byteorder))
             i+=1
         # print(uncomp)
         iter = 0
-        while(iter<lenpl[term1]*8):
+        while(iter<offsetAndLength[term1][1]*8):
             cLen = 0
             while(uncomp[iter]!='0'):
                 cLen+=1
                 iter+=1
-                if(iter>=lenpl[term1]*8):
+                if(iter>=offsetAndLength[term1][1]*8):
                     break
-            if(iter>=lenpl[term1]*8 and uncomp[-1]=='1'):
+            if(iter>=offsetAndLength[term1][1]*8 and uncomp[-1]=='1'):
                 break
             iter+=1
             cLen+=1
@@ -60,20 +68,20 @@ with open("c2_index_gap.idx", "rb") as f:
         f.seek(offset2)
         uncomp = ''
         i = 0
-        while(i<lenpl[term2]):
+        while(i<offsetAndLength[term2][1]):
             nextByte = f.read(1)
             uncomp += '{0:08b}'.format(int.from_bytes(nextByte, sys.byteorder))
             i+=1
         # print(uncomp)
         iter = 0
-        while(iter<lenpl[term2]*8):
+        while(iter<offsetAndLength[term2][1]*8):
             cLen = 0
             while(uncomp[iter]!='0'):
                 cLen+=1
                 iter+=1
-                if(iter>=lenpl[term2]*8):
+                if(iter>=offsetAndLength[term2][1]*8):
                     break
-            if(iter>=lenpl[term2]*8 and uncomp[-1]=='1'):
+            if(iter>=offsetAndLength[term2][1]*8 and uncomp[-1]=='1'):
                 break
             iter+=1
             cLen+=1

@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 from stemmer import PorterStemmer
 from collections import defaultdict
-from c1_vbe_test import VBEncode, VBDecode
 import sys
 import json
 import re
@@ -18,10 +17,15 @@ with open(indexFile, "rb") as f:
     jsonEncoded.decode('utf-8')
     docId= json.loads(jsonEncoded)
 
+ps = PorterStemmer()
+
 list1 = []
 list2 = []
-term1 = 'simon'
-term2 = 'i'
+term1 = 'waterfall'
+term1 = ps.stem(term1.lower(), 0, len(term1)-1)
+term2 = 'open'
+term2= ps.stem(term2.lower(), 0, len(term2)-1)
+# print(term1, term2)
 offset1 = offsetAndLength[term1][0]
 offset2 = offsetAndLength[term2][0]
 with open(indexFile, "rb") as f:

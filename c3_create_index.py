@@ -6,7 +6,10 @@ import sys
 import re
 import os
 import json
+import string
 
+exclist = string.punctuation 
+table = str.maketrans('', '', exclist)
 
 ps = PorterStemmer()
 def def_value():
@@ -15,9 +18,8 @@ docId = defaultdict(def_value)
 postings = defaultdict(list)
 count = 0
 lastDoc = defaultdict(int)
-offsets = defaultdict(int)
-lenpl = defaultdict(int)
-iter = 0
+offsetAndLength = defaultdict(lambda: [0,0])
+
 filecount = 0
 doclist = sorted(os.listdir('tipster-ap-frac'))
 total = len(doclist)
@@ -26,27 +28,29 @@ for file in doclist:
     f = os.path.join('tipster-ap-frac', file)
     if(file=='ap890520'): 
         continue
-    # iter+=1
-    # if(iter>10):
+    # if(filecount>5):
     #     break
     xmldoc = open(f, 'r').read()
-    soup = BeautifulSoup('<JAPNEET>' + xmldoc + '</JAPNEET>', 'xml')
-    docs = soup.find_all('DOC')
+    soup = BeautifulSoup(xmldoc, 'lxml')
+    docs = soup.find_all('doc')
     print('Processing ', f, '( ', filecount, ' out of ', total, ' processed )')
     for doc in docs:
         count += 1
-        docNo = doc.find('DOCNO')
-        heads = doc.find_all('HEAD')
-        texts = doc.find_all('TEXT')
+        docNo = doc.find('docno')
+        heads = doc.find_all('head')
+        texts = doc.find_all('text')
         id = docNo.get_text().replace(' ', '')
         docId[count] = id
         if(len(heads)>0):
             for head in heads:
+                temp = head.get_text().translate(str.maketrans(table)).split()                
                 # print(head.get_text())
                 # temp = re.sub(r'[^\w\s]', '', head.get_text().lower())
                 # temp = temp.split()
-                temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', head.get_text())
+                # temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', head.get_text())
                 for word in temp:
+                    if(word=='' or word==' ' or word=='  ' or word.isnumeric()):
+                        continue
                     stemmed = ps.stem(word.lower(), 0, len(word)-1)
                     # print(stemmed)
                     if(len(postings[stemmed])==0):
@@ -57,8 +61,11 @@ for file in doclist:
                         lastDoc[stemmed]=count       
         if(len(texts)>0):                        
             for text in texts:
-                temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', text.get_text().lower())
+                temp =text.get_text().translate(table).split()               
+                # temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', text.get_text().lower()
                 for word in temp:
+                    if(word=='' or word==' ' or word=='  ' or word.isnumeric()):
+                        continue
                     stemmed = ps.stem(word.lower(), 0, len(word)-1)
                     # print(stemmed)
                     if(len(postings[stemmed])==0):
@@ -68,11 +75,14 @@ for file in doclist:
                         postings[stemmed].append(count-lastDoc[stemmed]) 
                         lastDoc[stemmed]=count  
 
-byteCount = 0
-cOffset = 0
 destFile = open("c3_index_gap.idx", "wb")
+encodedJSON = json.dumps(docId).encode('utf-8')
+destFile.write(encodedJSON)
+offsetAndLength['DocIdMapLength'] = len(encodedJSON)
+cOffset = len(encodedJSON)
+
 for key in postings.keys():
-    offsets[key]=cOffset
+    offsetAndLength[key][0]=cOffset
     pl = postings[key]
     toWrite = ''
     for post in pl:
@@ -83,13 +93,7 @@ for key in postings.keys():
     # print(toWrite)
     destFile.write(toWrite)
     cOffset+=len(toWrite)
-    lenpl[key]=len(toWrite)
+    offsetAndLength[key][1]=len(toWrite)
 
-with open("c3_offsets", "w") as fp:
-    json.dump(offsets,fp) 
-
-with open("c3_lenpl", "w") as fp:
-    json.dump(lenpl,fp) 
-
-with open("c3_docid", "w") as fp:
-    json.dump(docId,fp) 
+with open("c3_offsetAndLength", "w") as fp:
+    json.dump(offsetAndLength,fp) 

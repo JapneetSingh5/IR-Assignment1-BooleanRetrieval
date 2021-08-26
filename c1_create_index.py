@@ -1,12 +1,23 @@
 from bs4 import BeautifulSoup
 from stemmer import PorterStemmer
 from collections import defaultdict
-from c1_vbe_test import VBEncode, VBDecode
 import sys
 import re
 import os
 import json
 import string
+
+def VBEncode(n):
+    bytes = [] 
+    bytes.append(n%128)
+    n = n//128
+    while(True):
+        if(n==0):           
+            break
+        else: 
+            bytes.insert(0, n%128 + 128)
+            n = n//128
+    return bytes
 
 exclist = string.punctuation 
 table = str.maketrans('', '', exclist)
@@ -19,18 +30,17 @@ postings = defaultdict(list)
 count = 0
 lastDoc = defaultdict(int)
 offsetAndLength = defaultdict(lambda: [0,0])
-lenpl = defaultdict(int)
 
 filecount = 0
-doclist = sorted(os.listdir('tipster-ap-frac'))
+doclist = os.listdir('tipster-ap-frac')
 total = len(doclist)
 for file in doclist:
     filecount += 1
     f = os.path.join('tipster-ap-frac', file)
     if(file=='ap890520'): 
         continue
-    if(filecount>5):
-        break
+    # if(filecount>5):
+    #     break
     xmldoc = open(f, 'r')
     soup = BeautifulSoup(xmldoc, 'lxml')
     docs = soup.find_all('doc')
@@ -91,9 +101,6 @@ for key in postings.keys():
             cOffset+=1
             offsetAndLength[key][1]+=1
             destFile.write(toWrite)
-
-
-
 
 with open("c1_offsetAndLength", "w") as fp:
     json.dump(offsetAndLength,fp) 
