@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from stemmer import PorterStemmer
+from PorterStemmer import PorterStemmer
 from collections import defaultdict
 import snappy
 import sys
