@@ -16,6 +16,8 @@ Time taken to index all 686 files using C1 with 'lxml' instead of 'xml' in bs4 :
 
 re based method works really slow wrt translate, possible efficiency boost.
 
+-> Attempted, made no significant difference
+
 3. I am sorting the directory list, is it really required?
 
 With sorting + lxml : 14min10s

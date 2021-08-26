@@ -7,24 +7,28 @@ import json
 import re
 import os
 
-f = open('c1_offsets',)
-offsets = json.load(f)
-f = open('c1_lenpl',)
-lenpl = json.load(f)
-f = open('c1_docid',)
-docId = json.load(f)
+f = open('c1_offsetAndLength', 'r')
+offsetAndLength = json.load(f)
+docId = {}
+DocIdMapLength = offsetAndLength['DocIdMapLength']
+indexFile = 'c1_index_gap.idx'
+
+with open(indexFile, "rb") as f:
+    jsonEncoded = f.read(DocIdMapLength)
+    jsonEncoded.decode('utf-8')
+    docId= json.loads(jsonEncoded)
 
 list1 = []
 list2 = []
 term1 = 'simon'
 term2 = 'i'
-offset1 = offsets[term1]
-offset2 = offsets[term2]
-with open("c1_index_gap.idx", "rb") as f:
+offset1 = offsetAndLength[term1][0]
+offset2 = offsetAndLength[term2][0]
+with open(indexFile, "rb") as f:
         decoded = 0
         totalDecoded = 0
         f.seek(offset1)
-        while(totalDecoded<lenpl[term1]):
+        while(totalDecoded<offsetAndLength[term1][1]):
             byte = f.read(1)
             totalDecoded += 1
             if(not byte):
@@ -41,7 +45,7 @@ with open("c1_index_gap.idx", "rb") as f:
         decoded = 0
         totalDecoded = 0
         f.seek(offset2)
-        while(totalDecoded<lenpl[term2]):
+        while(totalDecoded<offsetAndLength[term2][1]):
             byte = f.read(1)
             totalDecoded += 1
             if(not byte):
