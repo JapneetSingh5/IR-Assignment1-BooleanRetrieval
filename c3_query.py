@@ -48,8 +48,8 @@ with open(indexFile, "rb") as f:
         strList2 = strList2.split(' ')
         # print(strList2)
         list2 = [int(ele) for ele in strList2[0:-1]]
-# print(list1)
-# print(list2)
+print(list1)
+print(list2)
 f1 = open('c3_output.txt', 'w')
 len1 = len(list1)
 len2 = len(list2)

@@ -21,9 +21,9 @@ ps = PorterStemmer()
 
 list1 = []
 list2 = []
-term1 = 'waterfall'
+term1 = 'simon'
 term1 = ps.stem(term1.lower(), 0, len(term1)-1)
-term2 = 'open'
+term2 = 'i'
 term2= ps.stem(term2.lower(), 0, len(term2)-1)
 # print(term1, term2)
 offset1 = offsetAndLength[term1][0]
@@ -45,7 +45,7 @@ with open(indexFile, "rb") as f:
             else:
                 decoded = decoded*128 + (readByte-128)
 
-with open("c1_index_gap.idx", "rb") as f:
+with open(indexFile, "rb") as f:
         decoded = 0
         totalDecoded = 0
         f.seek(offset2)
@@ -75,7 +75,7 @@ if(len2>0):
     t2=list2[0]
 f1 = open('c1_output.txt', 'w')
 while(i<len1 and j<len2):
-    # print(t1, t2, file=f1)
+    # print(t1, t2)
     if(t1==t2):
         print(docId[str(t1)], file=f1)
         i+=1

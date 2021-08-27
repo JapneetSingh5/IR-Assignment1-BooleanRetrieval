@@ -32,15 +32,15 @@ lastDoc = defaultdict(int)
 offsetAndLength = defaultdict(lambda: [0,0])
 
 filecount = 0
-doclist = os.listdir('tipster-ap-frac')
+doclist = sorted(os.listdir('tipster-ap-frac'))
 total = len(doclist)
 for file in doclist:
     filecount += 1
     f = os.path.join('tipster-ap-frac', file)
     if(file=='ap890520'): 
         continue
-    # if(filecount>5):
-    #     break
+    if(filecount>20):
+        break
     xmldoc = open(f, 'r')
     soup = BeautifulSoup(xmldoc, 'lxml')
     docs = soup.find_all('doc')
