@@ -129,59 +129,59 @@ if __name__ == '__main__':
     if(c_no==0):
         for key in postings.keys():
             offsetAndLength[key][0]=cOffset
-        pl = postings[key]
-        toWrite=''
-        for i in range(0,len(pl)):
-            toWrite+=str(pl[i])
-            if(i!=len(pl)-1):
-                toWrite+=','
-        toWrite = toWrite.encode('utf8')
-        cOffset+=len(toWrite)
-        offsetAndLength[key][1]=len(toWrite)
-        destFile.write(toWrite)
+            pl = postings[key]
+            toWrite=''
+            for i in range(0,len(pl)):
+                toWrite+=str(pl[i])
+                if(i!=len(pl)-1):
+                    toWrite+=','
+            toWrite = toWrite.encode('utf8')
+            cOffset+=len(toWrite)
+            offsetAndLength[key][1]=len(toWrite)
+            destFile.write(toWrite)
     elif(c_no==1):
         for key in postings.keys():
             offsetAndLength[key][0]=cOffset
-        pl = postings[key]
-        for post in pl:
-            encoded = c1_encode(post)
-            for j in range(0, len(encoded)):
-                toWrite = encoded[j].to_bytes(1, sys.byteorder)
-                cOffset+=1
-                offsetAndLength[key][1]+=1
-                destFile.write(toWrite)   
+            pl = postings[key]
+            for post in pl:
+                encoded = c1_encode(post)
+                for j in range(0, len(encoded)):
+                    toWrite = encoded[j].to_bytes(1, sys.byteorder)
+                    cOffset+=1
+                    offsetAndLength[key][1]+=1
+                    destFile.write(toWrite)   
     elif(c_no==2):
         for key in postings.keys():
             offsetAndLength[key][0]=cOffset
-        pl = postings[key]
-        toWrite = ''
-        for post in pl:
-            toWrite+=c2_encode(post)
-        # print(toWrite)
-        padding = (8 - (len(toWrite)%8))%8
-        toWrite+=('1'*padding)
-        bytesList = [toWrite[i:i+8] for i in range(0, len(toWrite), 8)]
-        bytesList = [int(ele, 2) for ele in bytesList]
-        # print(bytesList)
-        cOffset+=len(bytesList)
-        offsetAndLength[key][1]=len(bytesList)
-        for posting in bytesList:
-            finalToWrite = posting.to_bytes(1, sys.byteorder)
-            destFile.write(finalToWrite)
+            pl = postings[key]
+            toWrite = ''
+            for post in pl:
+                toWrite+=c2_encode(post)
+            # print(toWrite)
+            padding = (8 - (len(toWrite)%8))%8
+            toWrite+=('1'*padding)
+            bytesList = [toWrite[i:i+8] for i in range(0, len(toWrite), 8)]
+            bytesList = [int(ele, 2) for ele in bytesList]
+            # print(bytesList)
+            cOffset+=len(bytesList)
+            offsetAndLength[key][1]=len(bytesList)
+            for posting in bytesList:
+                finalToWrite = posting.to_bytes(1, sys.byteorder)
+                destFile.write(finalToWrite)
     elif(c_no==3):
         for key in postings.keys():
             offsetAndLength[key][0]=cOffset
-        pl = postings[key]
-        toWrite = ''
-        for post in pl:
-            toWrite+=str(post)
-            toWrite+=' '
-        toWrite = toWrite.encode()
-        toWrite=snappy.compress(toWrite)
-        # print(toWrite)
-        destFile.write(toWrite)
-        cOffset+=len(toWrite)
-        offsetAndLength[key][1]=len(toWrite)    
+            pl = postings[key]
+            toWrite = ''
+            for post in pl:
+                toWrite+=str(post)
+                toWrite+=' '
+            toWrite = toWrite.encode()
+            toWrite=snappy.compress(toWrite)
+            # print(toWrite)
+            destFile.write(toWrite)
+            cOffset+=len(toWrite)
+            offsetAndLength[key][1]=len(toWrite)    
     elif(c_no==4):
         print('not implemented')
     elif(c_no==5):

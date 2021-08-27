@@ -24,7 +24,7 @@ if __name__ == '__main__':
     with open(indexfile, "rb") as f:
         c_no = f.read(1)
         c_no = int.from_bytes(c_no, sys.byteorder)
-        print('c', c_no)
+        # print('c', c_no)
         jsonEncoded = f.read(DocIdMapLength)
         jsonEncoded.decode('utf-8')
         docId= json.loads(jsonEncoded)
@@ -44,8 +44,29 @@ if __name__ == '__main__':
     offset1 = offsetAndLength[term1][0]
     offset2 = offsetAndLength[term2][0]
 
-
-    if(c_no==1):
+    if(c_no==0):
+        if term1 in offsetAndLength:
+            offset1 = offsetAndLength[term1][0]
+            # print(offset1)
+            with open(indexfile, "rb") as f:
+                    f.seek(offset1)
+                    encoded = f.read(offsetAndLength[term1][1])
+                    encoded = encoded.decode('utf8')
+                    # print(encoded)
+                    list1 = encoded.split(',')
+                    list1 = [int(ele) for ele in list1]
+        # print(list1)
+        if term2 in offsetAndLength:
+            offset2 = offsetAndLength[term2][0]
+            # print(offset2)
+            with open(indexfile, "rb") as f:
+                    f.seek(offset2)
+                    encoded = f.read(offsetAndLength[term2][1])
+                    encoded = encoded.decode('utf8')
+                    # print(encoded)
+                    list2 = encoded.split(',')
+                    list2 = [int(ele) for ele in list2]
+    elif(c_no==1):
         with open(indexfile, "rb") as f:
             decoded = 0
             totalDecoded = 0
