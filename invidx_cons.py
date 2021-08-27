@@ -77,7 +77,7 @@ if __name__ == '__main__':
                 xmltags.append(temp.lower())
 
     filecount = 0
-    doclist = os.listdir(coll_path)
+    doclist = sorted(os.listdir(coll_path))
     total = len(doclist)
 
     for file in doclist:
