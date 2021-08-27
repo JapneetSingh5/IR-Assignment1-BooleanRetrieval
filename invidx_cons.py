@@ -56,8 +56,8 @@ if __name__ == '__main__':
     lastDoc = defaultdict(int)
     offsetAndLength = defaultdict(lambda: [0,0])
 
-    exclist = string.punctuation 
-    table = str.maketrans('', '', exclist)
+    exclist = ',.:;"’(){}[]\n`\''
+    table = str.maketrans(exclist, ' '*len(exclist), '')
 
     coll_path = sys.argv[1]
     index_file = sys.argv[2]
@@ -85,8 +85,8 @@ if __name__ == '__main__':
         f = os.path.join(coll_path, file)
         if(file=='ap890520'): 
             continue
-        if(filecount>20):
-            break
+        # if(filecount>20):
+        #     break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
         docs = soup.find_all('doc')

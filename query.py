@@ -6,6 +6,7 @@ import sys
 import json
 import re
 import os
+import string
 
 def create_lists_to_intersect(c_no, query, indexfile):
     # print(query)
@@ -104,6 +105,9 @@ if __name__ == '__main__':
     dictfile = sys.argv[4]
     c_no = -1
 
+    exclist = ',.:;"’(){}[]\n`\''
+    table = str.maketrans(exclist, ' '*len(exclist), '')
+
     f = open(dictfile, 'r')
     offsetAndLength = json.load(f)
     docId = {}
@@ -129,7 +133,7 @@ if __name__ == '__main__':
     with open(queryfile, 'r') as f:
         for line in f:
             temp = line.rstrip()
-            tempList = temp.split()
+            tempList = temp = temp.translate(str.maketrans(table)).split()
             if(len(tempList)>0):
                 queries.append(tempList)
     for query in queries:
@@ -137,6 +141,7 @@ if __name__ == '__main__':
             query[i] = query[i].lower()
             query[i] = ps.stem(query[i], 0, len(query[i])-1)
     qCounter = 0
+    print(queries)
     with open(resultfile,'w') as f:
         f.truncate(0)
     for query in queries:
