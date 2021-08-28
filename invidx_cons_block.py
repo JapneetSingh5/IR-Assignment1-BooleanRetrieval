@@ -47,7 +47,7 @@ def c2_encode(x):
     encoded += temp2
     return encoded
 
-def writeDictToFile(d, file, logDict):
+def writeDictToFile(d, file, logDict, lastDict):
     cOffset = 0
     with open(file, 'wb') as f:
         for term in d.keys():
@@ -55,6 +55,7 @@ def writeDictToFile(d, file, logDict):
             strposts = str(posts).encode()
             logDict[term][0]=cOffset
             logDict[term][1] = len(strposts)
+            logDict[term][2] = lastDict[2]
             cOffset += len(strposts)
             f.write(strposts)
     return logDict
@@ -122,7 +123,7 @@ if __name__ == '__main__':
         f = os.path.join(coll_path, file)
         if(file=='ap890520'): 
             continue
-        if(filecount>2):
+        if(filecount>20):
             break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
