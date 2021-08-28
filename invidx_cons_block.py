@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # print(stopwords)
 
     filecount = 0
-    doclist = os.listdir(coll_path)
+    doclist = sorted(os.listdir(coll_path))
     # print(doclist)
     total = len(doclist)
 
@@ -201,10 +201,11 @@ if __name__ == '__main__':
         for key in offsetAndLength.keys():
             if(key=='DocIdMapLength'):
                 continue
-            print(key)
             offsetAndLength[key][0]=cOffset
             fullToWrite=''
             for i in range(0, sub_index_no):
+                if(key not in tempols[i]):
+                    continue
                 offset = tempols[i][key][0]
                 readLen = tempols[i][key][1]
                 subIndex = fs[i]
@@ -219,27 +220,37 @@ if __name__ == '__main__':
                     destFile.write(subList)
                     cOffset+=len(subList)
                     offsetAndLength[key][1]+=len(subList)
-            # pl = postings[key]
-            # toWrite=''
-            # for i in range(0,len(pl)):
-            #     toWrite+=str(pl[i])
-            #     if(i!=len(pl)-1):
-            #         toWrite+=','
-            # toWrite = toWrite.encode('utf8')
-            # cOffset+=len(toWrite)
-            # offsetAndLength[key][1]=len(toWrite)
-            # destFile.write(toWrite)
     elif(c_no==1):
-        for key in postings.keys():
+        tempols = []
+        fs=[]
+        for i in range(1, sub_index_no + 1):
+            f = open(temp_olfile+str(i), 'rb')
+            tempOL = json.load(f)
+            tempols.append(tempOL)
+        for i in range(1, sub_index_no + 1):
+            f = open(temp_indexfile+str(i), 'rb')
+            fs.append(f)
+        for key in offsetAndLength.keys():
+            if(key=='DocIdMapLength'):
+                continue
             offsetAndLength[key][0]=cOffset
-            pl = postings[key]
-            for post in pl:
-                encoded = c1_encode(post)
-                for j in range(0, len(encoded)):
-                    toWrite = encoded[j].to_bytes(1, sys.byteorder)
-                    cOffset+=1
-                    offsetAndLength[key][1]+=1
-                    destFile.write(toWrite)   
+            for i in range(0, sub_index_no):
+                if(key not in tempols[i]):
+                    continue
+                offset = tempols[i][key][0]
+                readLen = tempols[i][key][1]
+                subIndex = fs[i]
+                subIndex.seek(offset)
+                subList = subIndex.read(readLen).decode()
+                subList = subList.split(',')
+                subList = [int(ele) for ele in subList]
+                for post in subList:
+                    encoded = c1_encode(post)
+                    for j in range(0, len(encoded)):
+                        toWrite = encoded[j].to_bytes(1, sys.byteorder)
+                        cOffset+=1
+                        offsetAndLength[key][1]+=1
+                        destFile.write(toWrite)  
     elif(c_no==2):
         for key in postings.keys():
             offsetAndLength[key][0]=cOffset
