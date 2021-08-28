@@ -162,6 +162,7 @@ if __name__ == '__main__':
             result = []
             continue
         for list_no in range(1, len(lists_to_intersect)):   
+            # print(lists_to_intersect[list_no])
             newResult=[]   
             len1 = len(result)
             len2 = len(lists_to_intersect[list_no])

@@ -47,20 +47,22 @@ def c2_encode(x):
     encoded += temp2
     return encoded
 
-def writeDictToFile(d, file, logDict, lastDict):
+def write_dict_to_file(d, file, logDict, lastDoc):
     cOffset = 0
     with open(file, 'wb') as f:
         for term in d.keys():
-            posts = d[term]
-            strposts = str(posts).encode()
+            pl = d[term]
+            toWrite=''
+            for i in range(0,len(pl)):
+                toWrite+=str(pl[i])
+                if(i!=len(pl)-1):
+                    toWrite+=','
+            toWrite = toWrite.encode('utf8')
             logDict[term][0]=cOffset
-            logDict[term][1] = len(strposts)
-            logDict[term][2] = lastDict[2]
-            cOffset += len(strposts)
-            f.write(strposts)
+            logDict[term][1] = len(toWrite)
+            cOffset += len(toWrite)
+            f.write(toWrite)
     return logDict
-
-
 
 
 if __name__ == '__main__':
@@ -123,7 +125,7 @@ if __name__ == '__main__':
         f = os.path.join(coll_path, file)
         if(file=='ap890520'): 
             continue
-        if(filecount>20):
+        if(filecount>5):
             break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
@@ -150,7 +152,9 @@ if __name__ == '__main__':
                             if(word in stopwords):
                                 continue
                             stemmed = ps.stem(word.lower(), 0, len(word)-1)
-                            # print(stemmed)
+                            if(stemmed not in offsetAndLength):
+                                offsetAndLength[stemmed][0]=0
+                                offsetAndLength[stemmed][1]=0
                             if(len(postings[stemmed])==0):
                                 postings[stemmed].append(count)
                                 lastDoc[stemmed]=count   
@@ -158,7 +162,7 @@ if __name__ == '__main__':
                                 postings[stemmed].append(count-lastDoc[stemmed]) 
                                 lastDoc[stemmed]=count 
         if(filecount%block_size==0):
-            tempOL = writeDictToFile(postings, temp_indexfile+str(sub_index_no), tempOL)
+            tempOL = write_dict_to_file(postings, temp_indexfile+str(sub_index_no), tempOL, lastDoc)
             postings.clear()
             with open(temp_olfile +str(sub_index_no), 'wb') as f:
                 sub_index_OL = json.dumps(tempOL)
@@ -166,7 +170,7 @@ if __name__ == '__main__':
             tempOL.clear()
             sub_index_no+=1
     if(len(postings)>0):
-            tempOL = writeDictToFile(postings, temp_indexfile+str(sub_index_no), tempOL)
+            tempOL = write_dict_to_file(postings, temp_indexfile+str(sub_index_no), tempOL, lastDoc)
             postings.clear()
             with open(temp_olfile +str(sub_index_no), 'wb') as f:
                 sub_index_OL = json.dumps(tempOL)
@@ -175,90 +179,108 @@ if __name__ == '__main__':
     print('Total', sub_index_no, ' subindices created. Going for merge and compress..')
 
 
-    # destFile = open(index_file+'.idx', "wb")
-    # destFile.write(c_no.to_bytes(1, sys.byteorder))
-    # cOffset = 1
-    # encodedJSON = json.dumps(docId).encode('utf-8')
-    # destFile.write(encodedJSON)
-    # offsetAndLength['DocIdMapLength'][0] = 1
-    # offsetAndLength['DocIdMapLength'][1] = len(encodedJSON)
-    # cOffset += len(encodedJSON)
-    # offsetAndLength['Stopwords'][0] = cOffset
-    # if(len(stopwords)>0):
-    #     sw_string = str(stopwords).encode()
-    #     destFile.write(sw_string)
-    #     offsetAndLength['Stopwords'][1] = len(sw_string)
-    #     cOffset += len(sw_string)
-    # else: 
-    #     offsetAndLength['Stopwords'][1] = 0
-    # # print(sw_string)
-    # # print(len(sw_string))
+    destFile = open(index_file+'.idx', "wb")
+    destFile.write(c_no.to_bytes(1, sys.byteorder))
+    cOffset = 1
+    encodedJSON = json.dumps(docId).encode('utf-8')
+    destFile.write(encodedJSON)
+    offsetAndLength['DocIdMapLength'][0] = 1
+    offsetAndLength['DocIdMapLength'][1] = len(encodedJSON)
+    cOffset += len(encodedJSON)
 
-    # if(c_no==0):
-    #     for key in postings.keys():
-    #         offsetAndLength[key][0]=cOffset
-    #         pl = postings[key]
-    #         toWrite=''
-    #         for i in range(0,len(pl)):
-    #             toWrite+=str(pl[i])
-    #             if(i!=len(pl)-1):
-    #                 toWrite+=','
-    #         toWrite = toWrite.encode('utf8')
-    #         cOffset+=len(toWrite)
-    #         offsetAndLength[key][1]=len(toWrite)
-    #         destFile.write(toWrite)
-    # elif(c_no==1):
-    #     for key in postings.keys():
-    #         offsetAndLength[key][0]=cOffset
-    #         pl = postings[key]
-    #         for post in pl:
-    #             encoded = c1_encode(post)
-    #             for j in range(0, len(encoded)):
-    #                 toWrite = encoded[j].to_bytes(1, sys.byteorder)
-    #                 cOffset+=1
-    #                 offsetAndLength[key][1]+=1
-    #                 destFile.write(toWrite)   
-    # elif(c_no==2):
-    #     for key in postings.keys():
-    #         offsetAndLength[key][0]=cOffset
-    #         pl = postings[key]
-    #         toWrite = ''
-    #         for post in pl:
-    #             toWrite+=c2_encode(post)
-    #         # print(toWrite)
-    #         padding = (8 - (len(toWrite)%8))%8
-    #         toWrite+=('1'*padding)
-    #         bytesList = [toWrite[i:i+8] for i in range(0, len(toWrite), 8)]
-    #         bytesList = [int(ele, 2) for ele in bytesList]
-    #         # print(bytesList)
-    #         cOffset+=len(bytesList)
-    #         offsetAndLength[key][1]=len(bytesList)
-    #         for posting in bytesList:
-    #             finalToWrite = posting.to_bytes(1, sys.byteorder)
-    #             destFile.write(finalToWrite)
-    # elif(c_no==3):
-    #     for key in postings.keys():
-    #         offsetAndLength[key][0]=cOffset
-    #         pl = postings[key]
-    #         toWrite = ''
-    #         for post in pl:
-    #             toWrite+=str(post)
-    #             toWrite+=' '
-    #         toWrite = toWrite.encode()
-    #         toWrite=snappy.compress(toWrite)
-    #         # print(toWrite)
-    #         destFile.write(toWrite)
-    #         cOffset+=len(toWrite)
-    #         offsetAndLength[key][1]=len(toWrite)    
-    # elif(c_no==4):
-    #     print('not implemented')
-    # elif(c_no==5):
-    #     print('not_implemented')
-    # else: 
-    #     print('not_implemented')   
+    if(c_no==0):
+        tempols = []
+        fs=[]
+        for i in range(1, sub_index_no + 1):
+            f = open(temp_olfile+str(i), 'rb')
+            tempOL = json.load(f)
+            tempols.append(tempOL)
+        for i in range(1, sub_index_no + 1):
+            f = open(temp_indexfile+str(i), 'rb')
+            fs.append(f)
+        for key in offsetAndLength.keys():
+            if(key=='DocIdMapLength'):
+                continue
+            print(key)
+            offsetAndLength[key][0]=cOffset
+            fullToWrite=''
+            for i in range(0, sub_index_no):
+                offset = tempols[i][key][0]
+                readLen = tempols[i][key][1]
+                subIndex = fs[i]
+                subIndex.seek(offset)
+                subList = subIndex.read(readLen)
+                if(i>1):
+                    toWrite=','.encode()+subList
+                    destFile.write(','.encode()+subList)
+                    cOffset+=len(toWrite)
+                    offsetAndLength[key][1]+=len(toWrite)
+                else: 
+                    destFile.write(subList)
+                    cOffset+=len(subList)
+                    offsetAndLength[key][1]+=len(subList)
+            # pl = postings[key]
+            # toWrite=''
+            # for i in range(0,len(pl)):
+            #     toWrite+=str(pl[i])
+            #     if(i!=len(pl)-1):
+            #         toWrite+=','
+            # toWrite = toWrite.encode('utf8')
+            # cOffset+=len(toWrite)
+            # offsetAndLength[key][1]=len(toWrite)
+            # destFile.write(toWrite)
+    elif(c_no==1):
+        for key in postings.keys():
+            offsetAndLength[key][0]=cOffset
+            pl = postings[key]
+            for post in pl:
+                encoded = c1_encode(post)
+                for j in range(0, len(encoded)):
+                    toWrite = encoded[j].to_bytes(1, sys.byteorder)
+                    cOffset+=1
+                    offsetAndLength[key][1]+=1
+                    destFile.write(toWrite)   
+    elif(c_no==2):
+        for key in postings.keys():
+            offsetAndLength[key][0]=cOffset
+            pl = postings[key]
+            toWrite = ''
+            for post in pl:
+                toWrite+=c2_encode(post)
+            # print(toWrite)
+            padding = (8 - (len(toWrite)%8))%8
+            toWrite+=('1'*padding)
+            bytesList = [toWrite[i:i+8] for i in range(0, len(toWrite), 8)]
+            bytesList = [int(ele, 2) for ele in bytesList]
+            # print(bytesList)
+            cOffset+=len(bytesList)
+            offsetAndLength[key][1]=len(bytesList)
+            for posting in bytesList:
+                finalToWrite = posting.to_bytes(1, sys.byteorder)
+                destFile.write(finalToWrite)
+    elif(c_no==3):
+        for key in postings.keys():
+            offsetAndLength[key][0]=cOffset
+            pl = postings[key]
+            toWrite = ''
+            for post in pl:
+                toWrite+=str(post)
+                toWrite+=' '
+            toWrite = toWrite.encode()
+            toWrite=snappy.compress(toWrite)
+            # print(toWrite)
+            destFile.write(toWrite)
+            cOffset+=len(toWrite)
+            offsetAndLength[key][1]=len(toWrite)    
+    elif(c_no==4):
+        print('not implemented')
+    elif(c_no==5):
+        print('not_implemented')
+    else: 
+        print('not_implemented')   
 
-    # with open(index_file+'.dict', "w") as fp:
-    #     json.dump(offsetAndLength,fp) 
+    with open(index_file+'.dict', "w") as fp:
+        json.dump(offsetAndLength,fp) 
     
-    # end = time.time()
-    # print(end - start)
+    end = time.time()
+    print(end - start)
