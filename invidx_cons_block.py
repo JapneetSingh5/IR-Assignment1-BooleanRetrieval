@@ -252,37 +252,85 @@ if __name__ == '__main__':
                         offsetAndLength[key][1]+=1
                         destFile.write(toWrite)  
     elif(c_no==2):
-        for key in postings.keys():
+        tempols = []
+        fs=[]
+        for i in range(1, sub_index_no + 1):
+            f = open(temp_olfile+str(i), 'rb')
+            tempOL = json.load(f)
+            tempols.append(tempOL)
+        for i in range(1, sub_index_no + 1):
+            f = open(temp_indexfile+str(i), 'rb')
+            fs.append(f)
+        for key in offsetAndLength.keys():
+            pl = []
+            if(key=='DocIdMapLength'):
+                continue
             offsetAndLength[key][0]=cOffset
-            pl = postings[key]
-            toWrite = ''
-            for post in pl:
-                toWrite+=c2_encode(post)
-            # print(toWrite)
-            padding = (8 - (len(toWrite)%8))%8
-            toWrite+=('1'*padding)
-            bytesList = [toWrite[i:i+8] for i in range(0, len(toWrite), 8)]
-            bytesList = [int(ele, 2) for ele in bytesList]
-            # print(bytesList)
-            cOffset+=len(bytesList)
-            offsetAndLength[key][1]=len(bytesList)
-            for posting in bytesList:
-                finalToWrite = posting.to_bytes(1, sys.byteorder)
-                destFile.write(finalToWrite)
+            for i in range(0, sub_index_no):
+                if(key not in tempols[i]):
+                    continue
+                offset = tempols[i][key][0]
+                readLen = tempols[i][key][1]
+                subIndex = fs[i]
+                subIndex.seek(offset)
+                subList = subIndex.read(readLen).decode()
+                subList = subList.split(',')
+                subList = [int(ele) for ele in subList]
+                pl.extend(subList)
+                toWrite=''
+                for post in pl:
+                    toWrite+=c2_encode(post)
+                # print(toWrite)
+                padding = (8 - (len(toWrite)%8))%8
+                toWrite+=('1'*padding)
+                bytesList = [toWrite[i:i+8] for i in range(0, len(toWrite), 8)]
+                bytesList = [int(ele, 2) for ele in bytesList]
+                # print(bytesList)
+                cOffset+=len(bytesList)
+                offsetAndLength[key][1]=len(bytesList)
+                for posting in bytesList:
+                    finalToWrite = posting.to_bytes(1, sys.byteorder)
+                    destFile.write(finalToWrite) 
     elif(c_no==3):
-        for key in postings.keys():
+        tempols = []
+        fs=[]
+        for i in range(1, sub_index_no + 1):
+            f = open(temp_olfile+str(i), 'rb')
+            tempOL = json.load(f)
+            tempols.append(tempOL)
+        for i in range(1, sub_index_no + 1):
+            f = open(temp_indexfile+str(i), 'rb')
+            fs.append(f)
+        for key in offsetAndLength.keys():
+            pl = []
+            if(key=='DocIdMapLength'):
+                continue
             offsetAndLength[key][0]=cOffset
-            pl = postings[key]
-            toWrite = ''
-            for post in pl:
-                toWrite+=str(post)
-                toWrite+=' '
-            toWrite = toWrite.encode()
-            toWrite=snappy.compress(toWrite)
-            # print(toWrite)
-            destFile.write(toWrite)
-            cOffset+=len(toWrite)
-            offsetAndLength[key][1]=len(toWrite)    
+            for i in range(0, sub_index_no):
+                if(key not in tempols[i]):
+                    continue
+                offset = tempols[i][key][0]
+                readLen = tempols[i][key][1]
+                subIndex = fs[i]
+                subIndex.seek(offset)
+                subList = subIndex.read(readLen).decode()
+                subList = subList.split(',')
+                subList = [int(ele) for ele in subList]
+                pl.extend(subList)
+                toWrite=''
+                for post in pl:
+                    toWrite+=c2_encode(post)
+                # print(toWrite)
+                toWrite = ''
+                for post in pl:
+                    toWrite+=str(post)
+                    toWrite+=' '
+                toWrite = toWrite.encode()
+                toWrite=snappy.compress(toWrite)
+                # print(toWrite)
+                destFile.write(toWrite)
+                cOffset+=len(toWrite)
+                offsetAndLength[key][1]=len(toWrite)     
     elif(c_no==4):
         print('not implemented')
     elif(c_no==5):
