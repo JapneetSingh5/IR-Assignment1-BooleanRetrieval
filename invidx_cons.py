@@ -7,6 +7,7 @@ import snappy
 import os
 import json
 import string
+import time
 
 def def_value():
     return "Not Present"
@@ -49,6 +50,8 @@ def c2_encode(x):
 
 if __name__ == '__main__':
 
+    start = time.time()
+
     ps = PorterStemmer()
     docId = defaultdict(def_value)
     postings = defaultdict(list)
@@ -75,9 +78,16 @@ if __name__ == '__main__':
             temp = line.rstrip()
             if(temp!='DOCNO'):
                 xmltags.append(temp.lower())
+    
+    stopwords = []
+    with open(stopword_file, 'r') as f:
+        for line in f:
+            temp = line.rstrip()
+            stopwords.append(temp.lower())
+    # print(stopwords)
 
     filecount = 0
-    doclist = sorted(os.listdir(coll_path))
+    doclist = os.listdir(coll_path)
     total = len(doclist)
 
     for file in doclist:
@@ -85,12 +95,12 @@ if __name__ == '__main__':
         f = os.path.join(coll_path, file)
         if(file=='ap890520'): 
             continue
-        # if(filecount>20):
+        # if(filecount>5):
         #     break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
         docs = soup.find_all('doc')
-        print('Processing ', f, '( ', filecount, ' out of ', total, ' processed )')
+        # print('Processing ', f, '( ', filecount, ' out of ', total, ' processed )')
         for doc in docs:
             count += 1
             docNo = doc.find('docno')
@@ -102,11 +112,16 @@ if __name__ == '__main__':
                 tag_list = doc.find_all(xmltag)
                 if(len(tag_list)>0):
                     for tag_obj in tag_list:
-                        temp = tag_obj.get_text().translate(str.maketrans(table)).split()
+                        textBlob = tag_obj.get_text()
+                        for stopword in stopwords:
+                            textBlob.replace(stopword, '')
+                        temp = textBlob.translate(str.maketrans(table)).split()
                         # temp = modText.split()
                         # temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', head.get_text())
                         for word in temp:
                             if(word=='' or word==' ' or word=='  ' or word.isnumeric()):
+                                continue
+                            if(word in stopwords):
                                 continue
                             stemmed = ps.stem(word.lower(), 0, len(word)-1)
                             # print(stemmed)
@@ -125,6 +140,16 @@ if __name__ == '__main__':
     offsetAndLength['DocIdMapLength'][0] = 1
     offsetAndLength['DocIdMapLength'][1] = len(encodedJSON)
     cOffset += len(encodedJSON)
+    offsetAndLength['Stopwords'][0] = cOffset
+    if(len(stopwords)>0):
+        sw_string = str(stopwords).encode()
+        destFile.write(sw_string)
+        offsetAndLength['Stopwords'][1] = len(sw_string)
+        cOffset += len(sw_string)
+    else: 
+        offsetAndLength['Stopwords'][1] = 0
+    # print(sw_string)
+    # print(len(sw_string))
 
     if(c_no==0):
         for key in postings.keys():
@@ -191,3 +216,6 @@ if __name__ == '__main__':
 
     with open(index_file+'.dict', "w") as fp:
         json.dump(offsetAndLength,fp) 
+    
+    end = time.time()
+    print(end - start)

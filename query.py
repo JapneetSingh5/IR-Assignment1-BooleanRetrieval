@@ -7,6 +7,7 @@ import json
 import re
 import os
 import string
+import time
 
 def create_lists_to_intersect(c_no, query, indexfile):
     # print(query)
@@ -44,53 +45,53 @@ def create_lists_to_intersect(c_no, query, indexfile):
                         decoded = 0
                     else:
                         decoded = decoded*128 + (readByte-128)
-                    lists_to_intersect.append(term_list)
+            lists_to_intersect.append(term_list)
         elif(c_no==2):
             offset = offsetAndLength[term][0]
             with open(indexfile, "rb") as f:
-                    f.seek(offset)
-                    uncomp = ''
-                    i = 0
-                    while(i<offsetAndLength[term][1]):
-                        nextByte = f.read(1)
-                        uncomp += '{0:08b}'.format(int.from_bytes(nextByte, sys.byteorder))
-                        i+=1
-                    # print(uncomp)
-                    iter = 0
-                    while(iter<offsetAndLength[term][1]*8):
-                        cLen = 0
-                        while(uncomp[iter]!='0'):
-                            cLen+=1
-                            iter+=1
-                            if(iter>=offsetAndLength[term][1]*8):
-                                break
-                        if(iter>=offsetAndLength[term][1]*8 and uncomp[-1]=='1'):
-                            break
-                        iter+=1
+                f.seek(offset)
+                uncomp = ''
+                i = 0
+                while(i<offsetAndLength[term][1]):
+                    nextByte = f.read(1)
+                    uncomp += '{0:08b}'.format(int.from_bytes(nextByte, sys.byteorder))
+                    i+=1
+                # print(uncomp)
+                iter = 0
+                while(iter<offsetAndLength[term][1]*8):
+                    cLen = 0
+                    while(uncomp[iter]!='0'):
                         cLen+=1
-                        llx=cLen
-                        lx=1
-                        for _ in range(0,llx-1):
-                            bit = int(uncomp[iter])
-                            lx = lx*2 + bit
-                            iter = iter+1
-                        x = 1
-                        for _ in range(lx-1):
-                            bit = int(uncomp[iter])
-                            x = x*2 + bit
-                            iter = iter+1
-                        term_list.append(x)     
-                    lists_to_intersect.append(term_list)
+                        iter+=1
+                        if(iter>=offsetAndLength[term][1]*8):
+                            break
+                    if(iter>=offsetAndLength[term][1]*8 and uncomp[-1]=='1'):
+                        break
+                    iter+=1
+                    cLen+=1
+                    llx=cLen
+                    lx=1
+                    for _ in range(0,llx-1):
+                        bit = int(uncomp[iter])
+                        lx = lx*2 + bit
+                        iter = iter+1
+                    x = 1
+                    for _ in range(lx-1):
+                        bit = int(uncomp[iter])
+                        x = x*2 + bit
+                        iter = iter+1
+                    term_list.append(x)     
+                lists_to_intersect.append(term_list)
         elif(c_no==3):
             offset = offsetAndLength[term][0]
             with open(indexfile, "rb") as f:
-                    f.seek(offset)
-                    comp = f.read(offsetAndLength[term][1])
-                    uncomp = snappy.uncompress(comp)
-                    strList1 = uncomp.decode('utf8')
-                    strList1 = strList1.split(' ')
-                    term_list = [int(ele) for ele in strList1[0:-1]]
-                    lists_to_intersect.append(term_list)
+                f.seek(offset)
+                comp = f.read(offsetAndLength[term][1])
+                uncomp = snappy.uncompress(comp)
+                strList1 = uncomp.decode('utf8')
+                strList1 = strList1.split(' ')
+                term_list = [int(ele) for ele in strList1[0:-1]]
+                lists_to_intersect.append(term_list)
         elif(c_no==4 or c_no==5 or c_no>5 or c_no<0):
             print('not implemented')
             exit()
@@ -99,6 +100,7 @@ def create_lists_to_intersect(c_no, query, indexfile):
 
 
 if __name__ == '__main__':
+    start = time.time()
     queryfile = sys.argv[1]
     resultfile = sys.argv[2]
     indexfile = sys.argv[3]
@@ -113,8 +115,11 @@ if __name__ == '__main__':
     docId = {}
     DocIdMapOffset = offsetAndLength['DocIdMapLength'][0]
     DocIdMapLength = offsetAndLength['DocIdMapLength'][1]
+    # SWOffset = offsetAndLength['Stopwords'][0]
+    # SWLength = offsetAndLength['Stopwords'][1]
     f.close()
 
+    stopwords = set()
     with open(indexfile, "rb") as f:
         c_no = f.read(1)
         c_no = int.from_bytes(c_no, sys.byteorder)
@@ -122,6 +127,10 @@ if __name__ == '__main__':
         jsonEncoded = f.read(DocIdMapLength)
         jsonEncoded.decode('utf-8')
         docId= json.loads(jsonEncoded)
+        # if(SWLength>0):
+        #     sw_str = f.read(SWLength).decode()
+        #     stopwords = set(list(sw_str))
+
 
     if(c_no==-1):
         print('not_implemented')
@@ -138,8 +147,7 @@ if __name__ == '__main__':
                 queries.append(tempList)
     for query in queries:
         for i in range(0, len(query)):
-            query[i] = query[i].lower()
-            query[i] = ps.stem(query[i], 0, len(query[i])-1)
+            query[i] = ps.stem(query[i].lower(), 0, len(query[i])-1)
     qCounter = 0
     print(queries)
     with open(resultfile,'w') as f:
@@ -198,3 +206,5 @@ if __name__ == '__main__':
             print('Q'+str(qCounter), docId[str(total)], '1.0', file=f1)
         qCounter+=1  
         f1.close()  
+    end = time.time()
+    print(end-start)

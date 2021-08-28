@@ -24,3 +24,15 @@ With sorting + lxml : 14min10s
 Without sort + lxml: 12min22s
 Are results still the same? (Should be, but still good to check) almost :(
 -> Speed up factor: don't sort directory list, are results reqd to be sorted? FIND OUT
+
+
+28/8
+
+C0 Indexing Time: 736.2504279613495 seconds
+C0 Query Time: 2.8227379322052 seconds
+
+C1 Indexing Time: 875.4889481067657 seconds
+C1 Query Time: 4.794052839279175 seconds
+
+C2 Indexing Time: 925.1772983074188 seconds
+C2 Query Time: 11.153223752975464 seconds
