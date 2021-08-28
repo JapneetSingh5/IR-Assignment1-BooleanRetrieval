@@ -47,22 +47,56 @@ def c2_encode(x):
     encoded += temp2
     return encoded
 
-def write_dict_to_file(d, file, logDict, lastDoc):
-    cOffset = 0
+def write_dict_to_file_c0(d, file, log_dict):
+    c_offset = 0
     with open(file, 'wb') as f:
         for term in d.keys():
             pl = d[term]
-            toWrite=''
+            to_write=''
             for i in range(0,len(pl)):
-                toWrite+=str(pl[i])
+                to_write+=str(pl[i])
                 if(i!=len(pl)-1):
-                    toWrite+=','
-            toWrite = toWrite.encode('utf8')
-            logDict[term][0]=cOffset
-            logDict[term][1] = len(toWrite)
-            cOffset += len(toWrite)
-            f.write(toWrite)
-    return logDict
+                    to_write+=','
+            to_write = to_write.encode('utf8')
+            log_dict[term][0]=c_offset
+            log_dict[term][1] = len(to_write)
+            c_offset += len(to_write)
+            f.write(to_write)
+    return log_dict
+
+def write_dict_to_file_c1(d, file, log_dict):
+    c_offset = 0
+    with open(file, 'wb') as f:
+        for term in d.keys():
+            pl = d[term]
+            to_write=''
+            for i in range(0,len(pl)):
+                to_write+=str(pl[i])
+                if(i!=len(pl)-1):
+                    to_write+=','
+            to_write = to_write.encode('utf8')
+            log_dict[term][0]= c_offset
+            log_dict[term][1] = len(to_write)
+            c_offset += len(to_write)
+            f.write(to_write)
+    return log_dict
+
+def write_dict_to_file(c_no, d, file, log_dict):
+    tempOL = {}
+    if(c_no==0):
+        tempOL = write_dict_to_file_c0(d, file, log_dict)
+    elif(c_no==1):
+        tempOL = write_dict_to_file_c0(d, file, log_dict)
+    elif(c_no==2):
+        tempOL = write_dict_to_file_c0(d, file, log_dict)
+    elif(c_no==3):
+        tempOL = write_dict_to_file_c0(d, file, log_dict)
+    elif(c_no==4):
+        tempOL = write_dict_to_file_c0(d, file, log_dict)   
+    elif(c_no==5):
+        tempOL = write_dict_to_file_c0(d, file, log_dict)
+    return tempOL
+    
 
 
 if __name__ == '__main__':
@@ -110,7 +144,7 @@ if __name__ == '__main__':
     # print(doclist)
     total = len(doclist)
 
-    block_size = 100
+    block_size = 300
     sub_index_no = 1
     temp_indexfile = 'tempindex'
     temp_dictfile = 'tempdictfile'
@@ -125,7 +159,9 @@ if __name__ == '__main__':
         f = os.path.join(coll_path, file)
         if(file=='ap890520'): 
             continue
-        if(filecount>5):
+        # if(filecount<600):
+        #     continue
+        if(filecount>100):
             break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
@@ -162,7 +198,7 @@ if __name__ == '__main__':
                                 postings[stemmed].append(count-lastDoc[stemmed]) 
                                 lastDoc[stemmed]=count 
         if(filecount%block_size==0):
-            tempOL = write_dict_to_file(postings, temp_indexfile+str(sub_index_no), tempOL, lastDoc)
+            write_dict_to_file(c_no, postings, temp_indexfile+str(sub_index_no), tempOL)            
             postings.clear()
             with open(temp_olfile +str(sub_index_no), 'wb') as f:
                 sub_index_OL = json.dumps(tempOL)
@@ -170,39 +206,41 @@ if __name__ == '__main__':
             tempOL.clear()
             sub_index_no+=1
     if(len(postings)>0):
-            tempOL = write_dict_to_file(postings, temp_indexfile+str(sub_index_no), tempOL, lastDoc)
-            postings.clear()
-            with open(temp_olfile +str(sub_index_no), 'wb') as f:
-                sub_index_OL = json.dumps(tempOL)
-                f.write(sub_index_OL.encode())
-            tempOL.clear()
+        write_dict_to_file(c_no, postings, temp_indexfile+str(sub_index_no), tempOL) 
+        postings.clear()
+        with open(temp_olfile +str(sub_index_no), 'wb') as f:
+            sub_index_OL = json.dumps(tempOL)
+            f.write(sub_index_OL.encode())
+        tempOL.clear()
     print('Total', sub_index_no, ' subindices created. Going for merge and compress..')
 
 
     destFile = open(index_file+'.idx', "wb")
     destFile.write(c_no.to_bytes(1, sys.byteorder))
-    cOffset = 1
+    c_offset = 1
     encodedJSON = json.dumps(docId).encode('utf-8')
     destFile.write(encodedJSON)
     offsetAndLength['DocIdMapLength'][0] = 1
     offsetAndLength['DocIdMapLength'][1] = len(encodedJSON)
-    cOffset += len(encodedJSON)
+    c_offset += len(encodedJSON)
+
+    tempols = []
+    fs=[]
+    for i in range(1, sub_index_no + 1):
+        f = open(temp_olfile+str(i), 'rb')
+        tempOL = json.load(f)
+        tempols.append(tempOL)
+        f.close()
+    for i in range(1, sub_index_no + 1):
+        f = open(temp_indexfile+str(i), 'rb')
+        fs.append(f)
 
     if(c_no==0):
-        tempols = []
-        fs=[]
-        for i in range(1, sub_index_no + 1):
-            f = open(temp_olfile+str(i), 'rb')
-            tempOL = json.load(f)
-            tempols.append(tempOL)
-        for i in range(1, sub_index_no + 1):
-            f = open(temp_indexfile+str(i), 'rb')
-            fs.append(f)
         for key in offsetAndLength.keys():
             if(key=='DocIdMapLength'):
                 continue
-            offsetAndLength[key][0]=cOffset
-            fullToWrite=''
+            offsetAndLength[key][0]=c_offset
+            fullto_write=''
             for i in range(0, sub_index_no):
                 if(key not in tempols[i]):
                     continue
@@ -212,28 +250,19 @@ if __name__ == '__main__':
                 subIndex.seek(offset)
                 subList = subIndex.read(readLen)
                 if(i>1):
-                    toWrite=','.encode()+subList
+                    to_write=','.encode()+subList
                     destFile.write(','.encode()+subList)
-                    cOffset+=len(toWrite)
-                    offsetAndLength[key][1]+=len(toWrite)
+                    c_offset+=len(to_write)
+                    offsetAndLength[key][1]+=len(to_write)
                 else: 
                     destFile.write(subList)
-                    cOffset+=len(subList)
+                    c_offset+=len(subList)
                     offsetAndLength[key][1]+=len(subList)
     elif(c_no==1):
-        tempols = []
-        fs=[]
-        for i in range(1, sub_index_no + 1):
-            f = open(temp_olfile+str(i), 'rb')
-            tempOL = json.load(f)
-            tempols.append(tempOL)
-        for i in range(1, sub_index_no + 1):
-            f = open(temp_indexfile+str(i), 'rb')
-            fs.append(f)
         for key in offsetAndLength.keys():
             if(key=='DocIdMapLength'):
                 continue
-            offsetAndLength[key][0]=cOffset
+            offsetAndLength[key][0]=c_offset
             for i in range(0, sub_index_no):
                 if(key not in tempols[i]):
                     continue
@@ -243,29 +272,21 @@ if __name__ == '__main__':
                 subIndex.seek(offset)
                 subList = subIndex.read(readLen).decode()
                 subList = subList.split(',')
+                print(key, subList)
                 subList = [int(ele) for ele in subList]
                 for post in subList:
                     encoded = c1_encode(post)
                     for j in range(0, len(encoded)):
-                        toWrite = encoded[j].to_bytes(1, sys.byteorder)
-                        cOffset+=1
+                        to_write = encoded[j].to_bytes(1, sys.byteorder)
+                        c_offset+=1
                         offsetAndLength[key][1]+=1
-                        destFile.write(toWrite)  
+                        destFile.write(to_write)  
     elif(c_no==2):
-        tempols = []
-        fs=[]
-        for i in range(1, sub_index_no + 1):
-            f = open(temp_olfile+str(i), 'rb')
-            tempOL = json.load(f)
-            tempols.append(tempOL)
-        for i in range(1, sub_index_no + 1):
-            f = open(temp_indexfile+str(i), 'rb')
-            fs.append(f)
         for key in offsetAndLength.keys():
             pl = []
             if(key=='DocIdMapLength'):
                 continue
-            offsetAndLength[key][0]=cOffset
+            offsetAndLength[key][0]=c_offset
             for i in range(0, sub_index_no):
                 if(key not in tempols[i]):
                     continue
@@ -276,36 +297,28 @@ if __name__ == '__main__':
                 subList = subIndex.read(readLen).decode()
                 subList = subList.split(',')
                 subList = [int(ele) for ele in subList]
+                print(subList)
                 pl.extend(subList)
-                toWrite=''
+                to_write=''
                 for post in pl:
-                    toWrite+=c2_encode(post)
-                # print(toWrite)
-                padding = (8 - (len(toWrite)%8))%8
-                toWrite+=('1'*padding)
-                bytesList = [toWrite[i:i+8] for i in range(0, len(toWrite), 8)]
+                    to_write+=c2_encode(post)
+                # print(to_write)
+                padding = (8 - (len(to_write)%8))%8
+                to_write+=('1'*padding)
+                bytesList = [to_write[i:i+8] for i in range(0, len(to_write), 8)]
                 bytesList = [int(ele, 2) for ele in bytesList]
                 # print(bytesList)
-                cOffset+=len(bytesList)
+                c_offset+=len(bytesList)
                 offsetAndLength[key][1]=len(bytesList)
                 for posting in bytesList:
-                    finalToWrite = posting.to_bytes(1, sys.byteorder)
-                    destFile.write(finalToWrite) 
+                    finalto_write = posting.to_bytes(1, sys.byteorder)
+                    destFile.write(finalto_write) 
     elif(c_no==3):
-        tempols = []
-        fs=[]
-        for i in range(1, sub_index_no + 1):
-            f = open(temp_olfile+str(i), 'rb')
-            tempOL = json.load(f)
-            tempols.append(tempOL)
-        for i in range(1, sub_index_no + 1):
-            f = open(temp_indexfile+str(i), 'rb')
-            fs.append(f)
         for key in offsetAndLength.keys():
-            pl = []
             if(key=='DocIdMapLength'):
                 continue
-            offsetAndLength[key][0]=cOffset
+            to_write = ''
+            offsetAndLength[key][0]=c_offset
             for i in range(0, sub_index_no):
                 if(key not in tempols[i]):
                     continue
@@ -314,23 +327,11 @@ if __name__ == '__main__':
                 subIndex = fs[i]
                 subIndex.seek(offset)
                 subList = subIndex.read(readLen).decode()
-                subList = subList.split(',')
-                subList = [int(ele) for ele in subList]
-                pl.extend(subList)
-                toWrite=''
-                for post in pl:
-                    toWrite+=c2_encode(post)
-                # print(toWrite)
-                toWrite = ''
-                for post in pl:
-                    toWrite+=str(post)
-                    toWrite+=' '
-                toWrite = toWrite.encode()
-                toWrite=snappy.compress(toWrite)
-                # print(toWrite)
-                destFile.write(toWrite)
-                cOffset+=len(toWrite)
-                offsetAndLength[key][1]=len(toWrite)     
+                to_write+=subList
+                to_write=snappy.compress(to_write.encode())
+                destFile.write(to_write)
+                c_offset+=len(to_write)
+                offsetAndLength[key][1]=len(to_write)     
     elif(c_no==4):
         print('not implemented')
     elif(c_no==5):
@@ -340,6 +341,9 @@ if __name__ == '__main__':
 
     with open(index_file+'.dict', "w") as fp:
         json.dump(offsetAndLength,fp) 
+
+    for i in range(0, sub_index_no):
+        fs[i].close()
     
     end = time.time()
     print(end - start)

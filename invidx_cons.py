@@ -200,7 +200,7 @@ if __name__ == '__main__':
             toWrite = ''
             for post in pl:
                 toWrite+=str(post)
-                toWrite+=' '
+                toWrite+=','
             toWrite = toWrite.encode()
             toWrite=snappy.compress(toWrite)
             # print(toWrite)

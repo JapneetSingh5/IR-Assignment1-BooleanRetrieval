@@ -36,3 +36,10 @@ C1 Query Time: 4.794052839279175 seconds
 
 C2 Indexing Time: 925.1772983074188 seconds
 C2 Query Time: 11.153223752975464 seconds
+
+Switching to a block merge method 
+
+29/8
+
+Speed Bottlenecks - Instead of concatenating and writing the whole thing as one, write it one by one
+Possible in schemes C1, C3 can be optimised further too -> Find bottlenecks, write report

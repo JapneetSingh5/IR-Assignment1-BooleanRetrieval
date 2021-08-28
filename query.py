@@ -89,7 +89,7 @@ def create_lists_to_intersect(c_no, query, indexfile):
                 comp = f.read(offsetAndLength[term][1])
                 uncomp = snappy.uncompress(comp)
                 strList1 = uncomp.decode('utf8')
-                strList1 = strList1.split(' ')
+                strList1 = strList1.split(',')
                 term_list = [int(ele) for ele in strList1[0:-1]]
                 lists_to_intersect.append(term_list)
         elif(c_no==4 or c_no==5 or c_no>5 or c_no<0):
