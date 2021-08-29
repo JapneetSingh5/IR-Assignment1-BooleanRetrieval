@@ -57,29 +57,29 @@ def create_lists_to_intersect(c_no, query, indexfile):
                     uncomp += '{0:08b}'.format(int.from_bytes(nextByte, sys.byteorder))
                     i+=1
                 # print(uncomp)
-                iter = 0
-                while(iter<offsetAndLength[term][1]*8):
-                    cLen = 0
-                    while(uncomp[iter]!='0'):
-                        cLen+=1
-                        iter+=1
-                        if(iter>=offsetAndLength[term][1]*8):
+                j = 0
+                while(j<offsetAndLength[term][1]*8):
+                    c_len = 0
+                    while(uncomp[j]!='0'):
+                        c_len+=1
+                        j+=1
+                        if(j>=offsetAndLength[term][1]*8):
                             break
-                    if(iter>=offsetAndLength[term][1]*8 and uncomp[-1]=='1'):
+                    if(j>=offsetAndLength[term][1]*8 and uncomp[-1]=='1'):
                         break
-                    iter+=1
-                    cLen+=1
-                    llx=cLen
+                    j+=1
+                    c_len+=1
+                    llx=c_len
                     lx=1
                     for _ in range(0,llx-1):
-                        bit = int(uncomp[iter])
+                        bit = int(uncomp[j])
                         lx = lx*2 + bit
-                        iter = iter+1
+                        j = j+1
                     x = 1
                     for _ in range(lx-1):
-                        bit = int(uncomp[iter])
+                        bit = int(uncomp[j])
                         x = x*2 + bit
-                        iter = iter+1
+                        j = j+1
                     term_list.append(x)     
                 lists_to_intersect.append(term_list)
         elif(c_no==3):
@@ -115,21 +115,15 @@ if __name__ == '__main__':
     docId = {}
     DocIdMapOffset = offsetAndLength['DocIdMapLength'][0]
     DocIdMapLength = offsetAndLength['DocIdMapLength'][1]
-    # SWOffset = offsetAndLength['Stopwords'][0]
-    # SWLength = offsetAndLength['Stopwords'][1]
     f.close()
 
     stopwords = set()
     with open(indexfile, "rb") as f:
         c_no = f.read(1)
         c_no = int.from_bytes(c_no, sys.byteorder)
-        # print('c', c_no)
         jsonEncoded = f.read(DocIdMapLength)
-        jsonEncoded.decode('utf-8')
+        jsonEncoded.decode()
         docId= json.loads(jsonEncoded)
-        # if(SWLength>0):
-        #     sw_str = f.read(SWLength).decode()
-        #     stopwords = set(list(sw_str))
 
 
     if(c_no==-1):
@@ -160,11 +154,7 @@ if __name__ == '__main__':
             result = lists_to_intersect[0]
         else: 
             result = []
-            continue
-        # if(qCounter==2):
-        #     print(lists_to_intersect[0])  
-        #     print(lists_to_intersect[1])  
-        #     print(lists_to_intersect[2])  
+            continue 
         for list_no in range(1, len(lists_to_intersect)): 
             newResult=[]   
             len1 = len(result)
