@@ -143,7 +143,7 @@ if __name__ == '__main__':
         for i in range(0, len(query)):
             query[i] = ps.stem(query[i].lower(), 0, len(query[i])-1)
     qCounter = 0
-    print(queries)
+    # print(queries)
     with open(resultfile,'w') as f:
         f.truncate(0)
     for query in queries:

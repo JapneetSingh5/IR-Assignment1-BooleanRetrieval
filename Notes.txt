@@ -25,7 +25,6 @@ Without sort + lxml: 12min22s
 Are results still the same? (Should be, but still good to check) almost :(
 -> Speed up factor: don't sort directory list, are results reqd to be sorted? FIND OUT
 
-
 28/8
 
 C0 Indexing Time: 736.2504279613495 seconds
@@ -44,11 +43,60 @@ Switching to a block merge method
 Speed Bottlenecks - Instead of concatenating and writing the whole thing as one, write it one by one
 Possible in schemes C1, C3 can be optimised further too -> Find bottlenecks, write report
 
-748.5985097885132  C0I
+----------------------------------------------------------------
+
+748.5985097885132  C0I (29/8 ~6PM)
 2.8050239086151123 C0Q
 
-885.7165219783783 | Intital run with sub_index written as string, changed to sub_index written as binary
-9.115853071212769 | Next, rewritten s.t. no translation/encoded required while writing to destFile 
+734.5990040302277  C0I (30/8 ~1AM) Block Size 300
+3.2839322090148926 C0Q
+2.843123197555542  C0Q
+2.8754849433898926 C0Q
+2.941880702972412  C0Q
+3.2271318435668945 C0Q
 
-781.5222561359406 C1I
+SIZES
+C0 Full Index 101.3MB
+C0 Full Dict    8.5MB
+
+----------------------------------------------------------------
+
+885.7165219783783 C1I | Intital run with sub_index written as string, changed to sub_index written as binary
+9.115853071212769 C1Q | Next, rewritten s.t. no translation/encoded required while writing to destFile 
+
+781.5222561359406 C1I (29/8 ~6PM)
 4.796464920043945 C1Q
+
+819.5955681800842 C1I (30/8 ~1AM) Block Size 300
+5.030918121337891 C1Q
+4.856018304824829 C1Q
+
+SIZES
+C1 Full Index  46.1MB
+C1 Full Dict    8.3MB
+
+----------------------------------------------------------------
+
+872.7786040306091 C2I (30/8 ~1AM) Block Size 300
+10.078965902328491 C2Q
+10.858813762664795 C2Q
+11.52536416053772  C2Q
+
+SIZES
+C2 Full Index  36.3MB
+C2 Full Dict    8.3MB
+
+----------------------------------------------------------------
+
+713.8030400276184 C3I (30/8 ~1AM) Block Size 300
+3.6472651958465576 C3Q
+3.0475640296936035 C3Q
+
+SIZES
+C3 Full Index  64.0MB
+C3 Full Dict    8.3MB
+
+----------------------------------------------------------------
+
+
+
