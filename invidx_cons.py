@@ -119,7 +119,7 @@ if __name__ == '__main__':
                         # temp = modText.split()
                         # temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', head.get_text())
                         for word in temp:
-                            if(word=='' or word==' ' or word=='  ' or word.isnumeric()):
+                            if(word=='' or word==' ' or word=='  '):
                                 continue
                             if(word in stopwords):
                                 continue

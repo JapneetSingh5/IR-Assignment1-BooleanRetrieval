@@ -153,7 +153,7 @@ if __name__ == '__main__':
     with open(resultfile,'w') as f:
         f.truncate(0)
     for query in queries:
-        lists_to_intersect = create_lists_to_intersect(c_no, query, indexfile)
+        lists_to_intersect = create_lists_to_intersect(c_no, query, indexfile)        
         f1 = open(resultfile, 'a')    
         result = []
         if(len(lists_to_intersect)>0):
@@ -161,8 +161,11 @@ if __name__ == '__main__':
         else: 
             result = []
             continue
-        for list_no in range(1, len(lists_to_intersect)):   
-            # print(lists_to_intersect[list_no])
+        # if(qCounter==2):
+        #     print(lists_to_intersect[0])  
+        #     print(lists_to_intersect[1])  
+        #     print(lists_to_intersect[2])  
+        for list_no in range(1, len(lists_to_intersect)): 
             newResult=[]   
             len1 = len(result)
             len2 = len(lists_to_intersect[list_no])
@@ -184,6 +187,7 @@ if __name__ == '__main__':
             while(i<len1 and j<len2):
                 # print(t1, t2)
                 if(t1==t2):
+                    # print(t1, lastEle, t2)
                     newResult.append(t1-lastEle)
                     lastEle = t1
                     i+=1
@@ -201,10 +205,12 @@ if __name__ == '__main__':
                     if(j<len2):
                         t2+=lists_to_intersect[list_no][j] 
             result = newResult 
+            # print(result)
         total = 0
+
         for doc in result: 
             total+=doc
-            print('Q'+str(qCounter), docId[str(total)], '1.0', file=f1)
+            print('Q'+str(qCounter)+' '+docId[str(total)]+' 1.0 ', file=f1)
         qCounter+=1  
         f1.close()  
     end = time.time()

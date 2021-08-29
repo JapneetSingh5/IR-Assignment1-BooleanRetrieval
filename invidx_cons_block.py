@@ -107,8 +107,8 @@ if __name__ == '__main__':
     docId = defaultdict(def_value)
     postings = defaultdict(list)
     count = 0
-    lastDoc = defaultdict(int)
-    offsetAndLength = defaultdict(lambda: [0,0])
+    lastDoc = defaultdict(lambda: 0)
+    offsetAndLength = {}
     
 
     exclist = ',.:;"’(){}[]\n`\''
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     # print(doclist)
     total = len(doclist)
 
-    block_size = 300
+    block_size = 100
     sub_index_no = 1
     temp_indexfile = 'tempindex'
     temp_dictfile = 'tempdictfile'
@@ -161,7 +161,7 @@ if __name__ == '__main__':
             continue
         # if(filecount<600):
         #     continue
-        if(filecount>100):
+        if(filecount>102):
             break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
@@ -183,18 +183,24 @@ if __name__ == '__main__':
                         # temp = modText.split()
                         # temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', head.get_text())
                         for word in temp:
-                            if(word=='' or word==' ' or word=='  ' or word.isnumeric()):
+                            if(word=='' or word==' ' or word=='  '):
                                 continue
                             if(word in stopwords):
                                 continue
                             stemmed = ps.stem(word.lower(), 0, len(word)-1)
-                            if(stemmed not in offsetAndLength):
-                                offsetAndLength[stemmed][0]=0
-                                offsetAndLength[stemmed][1]=0
-                            if(len(postings[stemmed])==0):
+                            if(lastDoc[stemmed]==0):
+                                # term has been encountered for the first time, give current docId as its element in the list
+                                offsetAndLength[stemmed] = [0,0]
                                 postings[stemmed].append(count)
                                 lastDoc[stemmed]=count   
                             elif(lastDoc[stemmed]!=count):
+                                # term has been encountered before
+                                if(count-lastDoc[stemmed]==29239):
+                                    print(stemmed)
+                                    print(filecount)
+                                    print(lastDoc[stemmed])
+                                    print(count)
+                                    print(postings[stemmed])
                                 postings[stemmed].append(count-lastDoc[stemmed]) 
                                 lastDoc[stemmed]=count 
         if(filecount%block_size==0):
@@ -220,8 +226,7 @@ if __name__ == '__main__':
     c_offset = 1
     encodedJSON = json.dumps(docId).encode('utf-8')
     destFile.write(encodedJSON)
-    offsetAndLength['DocIdMapLength'][0] = 1
-    offsetAndLength['DocIdMapLength'][1] = len(encodedJSON)
+    offsetAndLength['DocIdMapLength'] = [1, len(encodedJSON)]
     c_offset += len(encodedJSON)
 
     tempols = []
@@ -240,7 +245,7 @@ if __name__ == '__main__':
             if(key=='DocIdMapLength'):
                 continue
             offsetAndLength[key][0]=c_offset
-            fullto_write=''
+            printed=0
             for i in range(0, sub_index_no):
                 if(key not in tempols[i]):
                     continue
@@ -249,15 +254,14 @@ if __name__ == '__main__':
                 subIndex = fs[i]
                 subIndex.seek(offset)
                 subList = subIndex.read(readLen)
-                if(i>1):
-                    to_write=','.encode()+subList
-                    destFile.write(','.encode()+subList)
-                    c_offset+=len(to_write)
-                    offsetAndLength[key][1]+=len(to_write)
-                else: 
-                    destFile.write(subList)
-                    c_offset+=len(subList)
-                    offsetAndLength[key][1]+=len(subList)
+                if(printed>0):
+                    destFile.write(','.encode())
+                    c_offset+=len(','.encode())
+                    offsetAndLength[key][1]+=len(','.encode())
+                destFile.write(subList)
+                c_offset+=len(subList)
+                offsetAndLength[key][1]+=len(subList)
+                printed+=1
     elif(c_no==1):
         for key in offsetAndLength.keys():
             if(key=='DocIdMapLength'):
@@ -272,7 +276,7 @@ if __name__ == '__main__':
                 subIndex.seek(offset)
                 subList = subIndex.read(readLen).decode()
                 subList = subList.split(',')
-                print(key, subList)
+                # print(key, subList)
                 subList = [int(ele) for ele in subList]
                 for post in subList:
                     encoded = c1_encode(post)
@@ -297,7 +301,7 @@ if __name__ == '__main__':
                 subList = subIndex.read(readLen).decode()
                 subList = subList.split(',')
                 subList = [int(ele) for ele in subList]
-                print(subList)
+                # print(subList)
                 pl.extend(subList)
                 to_write=''
                 for post in pl:
