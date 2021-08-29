@@ -178,7 +178,7 @@ if __name__ == '__main__':
     doclist = sorted(os.listdir(coll_path))
     total = len(doclist)
 
-    block_size = 343
+    block_size = 10
     sub_index_no = 1
     temp_indexfile = 'C'+str(c_no)+'tempindex'
     temp_dictfile = 'C'+str(c_no)+'tempdictfile'
@@ -192,8 +192,8 @@ if __name__ == '__main__':
             continue
         # if(filecount<600):
         #     continue
-        # if(filecount>30):
-        #     break
+        if(filecount>20):
+            break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
         docs = soup.find_all('doc')
