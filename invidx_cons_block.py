@@ -323,6 +323,7 @@ if __name__ == '__main__':
                 continue
             to_write = ''
             offsetAndLength[key][0]=c_offset
+            printed=0
             for i in range(0, sub_index_no):
                 if(key not in tempols[i]):
                     continue
@@ -330,12 +331,16 @@ if __name__ == '__main__':
                 readLen = tempols[i][key][1]
                 subIndex = fs[i]
                 subIndex.seek(offset)
-                subList = subIndex.read(readLen).decode()
+                subList = subIndex.read(readLen)
+                subList=subList.decode()
+                if(printed>0):
+                    to_write+=','
                 to_write+=subList
-                to_write=snappy.compress(to_write.encode())
-                destFile.write(to_write)
-                c_offset+=len(to_write)
-                offsetAndLength[key][1]=len(to_write)     
+                printed+=1
+            to_write=snappy.compress(to_write.encode())
+            destFile.write(to_write)
+            c_offset+=len(to_write)
+            offsetAndLength[key][1]=len(to_write)     
     elif(c_no==4):
         print('not implemented')
     elif(c_no==5):
