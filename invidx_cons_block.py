@@ -52,11 +52,11 @@ def write_dict_to_file_c0(d, file, log_dict):
     with open(file, 'wb') as f:
         for term in d.keys():
             pl = d[term]
-            to_write=''
-            for i in range(0,len(pl)):
-                to_write+=str(pl[i])
-                if(i!=len(pl)-1):
-                    to_write+=','
+            to_write= ','.join(pl)
+            # for i in range(0,len(pl)):
+            #     to_write+=str(pl[i])
+            #     if(i!=len(pl)-1):
+            #         to_write+=','
             to_write = to_write.encode('utf8')
             log_dict[term][0]=c_offset
             log_dict[term][1] = len(to_write)
@@ -65,6 +65,39 @@ def write_dict_to_file_c0(d, file, log_dict):
     return log_dict
 
 def write_dict_to_file_c1(d, file, log_dict):
+    c_offset = 0
+    # print("writing using c1 write")
+    with open(file, 'wb') as f:
+        for term in d.keys():
+            log_dict[term][0]=c_offset
+            pl = d[term]
+            for post in pl:
+                encoded = c1_encode(post)
+                for j in range(0, len(encoded)):
+                    to_write = encoded[j].to_bytes(1, sys.byteorder)
+                    c_offset+=1
+                    log_dict[term][1]+=1
+                    f.write(to_write)   
+    return log_dict
+
+def write_dict_to_file_c2(d, file, log_dict):
+    c_offset = 0
+    with open(file, 'wb') as f:
+        for term in d.keys():
+            pl = d[term]
+            to_write=''
+            for i in range(0,len(pl)):
+                to_write+=str(pl[i])
+                if(i!=len(pl)-1):
+                    to_write+=','
+            to_write = to_write.encode('utf8')
+            log_dict[term][0]= c_offset
+            log_dict[term][1] = len(to_write)
+            c_offset += len(to_write)
+            f.write(to_write)
+    return log_dict
+
+def write_dict_to_file_c3(d, file, log_dict):
     c_offset = 0
     with open(file, 'wb') as f:
         for term in d.keys():
@@ -82,20 +115,20 @@ def write_dict_to_file_c1(d, file, log_dict):
     return log_dict
 
 def write_dict_to_file(c_no, d, file, log_dict):
-    tempOL = {}
     if(c_no==0):
-        tempOL = write_dict_to_file_c0(d, file, log_dict)
+        return write_dict_to_file_c0(d, file, log_dict)
     elif(c_no==1):
-        tempOL = write_dict_to_file_c0(d, file, log_dict)
+        return write_dict_to_file_c1(d, file, log_dict)
     elif(c_no==2):
-        tempOL = write_dict_to_file_c0(d, file, log_dict)
+        return write_dict_to_file_c2(d, file, log_dict)
     elif(c_no==3):
-        tempOL = write_dict_to_file_c0(d, file, log_dict)
+        return write_dict_to_file_c3(d, file, log_dict)
     elif(c_no==4):
-        tempOL = write_dict_to_file_c0(d, file, log_dict)   
+        return {}
     elif(c_no==5):
-        tempOL = write_dict_to_file_c0(d, file, log_dict)
-    return tempOL
+        return {}
+    else: 
+        return {}
     
 
 
@@ -144,7 +177,7 @@ if __name__ == '__main__':
     # print(doclist)
     total = len(doclist)
 
-    block_size = 100
+    block_size = 300
     sub_index_no = 1
     temp_indexfile = 'tempindex'
     temp_dictfile = 'tempdictfile'
@@ -161,8 +194,8 @@ if __name__ == '__main__':
             continue
         # if(filecount<600):
         #     continue
-        if(filecount>102):
-            break
+        # if(filecount>102):
+        #     break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
         docs = soup.find_all('doc')
@@ -195,16 +228,10 @@ if __name__ == '__main__':
                                 lastDoc[stemmed]=count   
                             elif(lastDoc[stemmed]!=count):
                                 # term has been encountered before
-                                if(count-lastDoc[stemmed]==29239):
-                                    print(stemmed)
-                                    print(filecount)
-                                    print(lastDoc[stemmed])
-                                    print(count)
-                                    print(postings[stemmed])
                                 postings[stemmed].append(count-lastDoc[stemmed]) 
                                 lastDoc[stemmed]=count 
         if(filecount%block_size==0):
-            write_dict_to_file(c_no, postings, temp_indexfile+str(sub_index_no), tempOL)            
+            tempOL = write_dict_to_file(c_no, postings, temp_indexfile+str(sub_index_no), tempOL)            
             postings.clear()
             with open(temp_olfile +str(sub_index_no), 'wb') as f:
                 sub_index_OL = json.dumps(tempOL)
@@ -212,7 +239,7 @@ if __name__ == '__main__':
             tempOL.clear()
             sub_index_no+=1
     if(len(postings)>0):
-        write_dict_to_file(c_no, postings, temp_indexfile+str(sub_index_no), tempOL) 
+        tempOL = write_dict_to_file(c_no, postings, temp_indexfile+str(sub_index_no), tempOL) 
         postings.clear()
         with open(temp_olfile +str(sub_index_no), 'wb') as f:
             sub_index_OL = json.dumps(tempOL)
@@ -246,6 +273,7 @@ if __name__ == '__main__':
                 continue
             offsetAndLength[key][0]=c_offset
             printed=0
+            bin_comma = ','.encode()
             for i in range(0, sub_index_no):
                 if(key not in tempols[i]):
                     continue
@@ -255,9 +283,9 @@ if __name__ == '__main__':
                 subIndex.seek(offset)
                 subList = subIndex.read(readLen)
                 if(printed>0):
-                    destFile.write(','.encode())
-                    c_offset+=len(','.encode())
-                    offsetAndLength[key][1]+=len(','.encode())
+                    destFile.write(bin_comma)
+                    c_offset+=len(bin_comma)
+                    offsetAndLength[key][1]+=len(bin_comma)
                 destFile.write(subList)
                 c_offset+=len(subList)
                 offsetAndLength[key][1]+=len(subList)
@@ -274,17 +302,10 @@ if __name__ == '__main__':
                 readLen = tempols[i][key][1]
                 subIndex = fs[i]
                 subIndex.seek(offset)
-                subList = subIndex.read(readLen).decode()
-                subList = subList.split(',')
-                # print(key, subList)
-                subList = [int(ele) for ele in subList]
-                for post in subList:
-                    encoded = c1_encode(post)
-                    for j in range(0, len(encoded)):
-                        to_write = encoded[j].to_bytes(1, sys.byteorder)
-                        c_offset+=1
-                        offsetAndLength[key][1]+=1
-                        destFile.write(to_write)  
+                subList = subIndex.read(readLen)
+                c_offset+=len(subList)
+                offsetAndLength[key][1]+=len(subList)
+                destFile.write(subList)  
     elif(c_no==2):
         for key in offsetAndLength.keys():
             pl = []

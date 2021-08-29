@@ -43,3 +43,12 @@ Switching to a block merge method
 
 Speed Bottlenecks - Instead of concatenating and writing the whole thing as one, write it one by one
 Possible in schemes C1, C3 can be optimised further too -> Find bottlenecks, write report
+
+748.5985097885132  C0I
+2.8050239086151123 C0Q
+
+885.7165219783783 | Intital run with sub_index written as string, changed to sub_index written as binary
+9.115853071212769 | Next, rewritten s.t. no translation/encoded required while writing to destFile 
+
+781.5222561359406 C1I
+4.796464920043945 C1Q
