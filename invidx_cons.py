@@ -53,7 +53,6 @@ def c2_encode(x):
     return encoded
 
 def write_dict_to_file_c0(d, file, log_dict):
-    start = time.time()
     c_offset = 0
     with open(file, 'wb') as f:
         for term in d.keys():
@@ -64,13 +63,10 @@ def write_dict_to_file_c0(d, file, log_dict):
             log_dict[term][1] = len(to_write)
             c_offset += len(to_write)
             f.write(to_write)
-    end = time.time()
-    print(end - start)
     return log_dict
 
 def write_dict_to_file_c1(d, file, log_dict):
     c_offset = 0
-    # print("writing using c1 write")
     with open(file, 'wb') as f:
         for term in d.keys():
             log_dict[term][0]=c_offset
@@ -146,7 +142,7 @@ if __name__ == '__main__':
     offsetAndLength = {}
     
     not_implemented = 'not implemented'
-    exclist = ',.:;"’(){}[]\n`\''
+    exclist = ',.:;"(){}[]\n`\''
     table = str.maketrans(exclist, ' '*len(exclist), '')
 
     coll_path = sys.argv[1]
@@ -190,8 +186,8 @@ if __name__ == '__main__':
             continue
         # if(filecount<600):
         #     continue
-        # if(filecount>20):
-        #     break
+        if(filecount>20):
+            break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
         docs = soup.find_all('doc')
@@ -234,22 +230,22 @@ if __name__ == '__main__':
             sub_index_no+=1
 
     if(len(postings)>0):
-        print('Writing leftovers ..')
         tempOL = write_dict_to_file(c_no, postings, temp_indexfile+str(sub_index_no), tempOL) 
         postings.clear()
         with open(temp_olfile +str(sub_index_no), 'wb') as f:
             sub_index_OL = json.dumps(tempOL)
             f.write(sub_index_OL.encode())
         tempOL.clear()
-    print('Total', sub_index_no, ' subindices created. Going for merge and compress..')
 
     destFile = open(index_file+'.idx', "wb")
     destFile.write(c_no.to_bytes(1, sys.byteorder))
     c_offset = 1
-    encodedJSON = json.dumps(docId).encode('utf-8')
-    destFile.write(encodedJSON)
-    offsetAndLength['DocIdMapLength'] = [1, len(encodedJSON)]
-    c_offset += len(encodedJSON)
+    # encodedJSON = json.dumps(docId).encode('utf-8')
+    # destFile.write(encodedJSON)
+    # json.dump(docId, destFile)
+    offsetAndLength['DocIdMapLength'] = docId
+    # offsetAndLength['DocIdMapLength'] = [1, destFile.tell()]
+    # c_offset += destFile.tell()
 
     tempols = []
     fs=[]

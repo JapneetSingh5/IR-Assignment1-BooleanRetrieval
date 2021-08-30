@@ -59,7 +59,7 @@ if __name__ == '__main__':
     lastDoc = defaultdict(int)
     offsetAndLength = defaultdict(lambda: [0,0])
 
-    exclist = ',.:;"’(){}[]\n`\''
+    exclist = ',.:;"(){}[]\n`\''
     table = str.maketrans(exclist, ' '*len(exclist), '')
 
     coll_path = sys.argv[1]
@@ -104,8 +104,6 @@ if __name__ == '__main__':
         for doc in docs:
             count += 1
             docNo = doc.find('docno')
-            # heads = doc.find_all('head')
-            # texts = doc.find_all('text')
             id = docNo.get_text().replace(' ', '')
             docId[count] = id
             for xmltag in xmltags:
@@ -116,8 +114,6 @@ if __name__ == '__main__':
                         for stopword in stopwords:
                             textBlob.replace(stopword, '')
                         temp = textBlob.translate(str.maketrans(table)).split()
-                        # temp = modText.split()
-                        # temp = re.split(r'[`\-=~!@#$%^&*()_+\[\]{};\'\\:"|<,./<>?\s]', head.get_text())
                         for word in temp:
                             if(word=='' or word==' ' or word=='  '):
                                 continue
@@ -148,8 +144,6 @@ if __name__ == '__main__':
         cOffset += len(sw_string)
     else: 
         offsetAndLength['Stopwords'][1] = 0
-    # print(sw_string)
-    # print(len(sw_string))
 
     if(c_no==0):
         for key in postings.keys():
