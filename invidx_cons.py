@@ -63,7 +63,7 @@ def c5_encode(pl):
     if(len(pl)==1):
         comp1 = ['{0:08b}'.format(x) for x in c1_encode(b)]
         comp2 = ['{0:08b}'.format(x) for x in c1_encode(k)]
-        return(''.join(comp1)+''.join(comp2)+'11'*(cutOff+1))
+        return(''.join(comp1)+''.join(comp2)+'11')
     while(cutOff<len(pl) and (cutOff+1)*100/len(pl)<80):
         b = min(b, pl[cutOff])
         maxEle = max(maxEle, pl[cutOff])
@@ -179,7 +179,7 @@ def write_dict_to_file(c_no, d, file, log_dict):
 
 if __name__ == '__main__':
     # start the timer
-    start = time.time()
+    # start = time.time()
     # Porter Stemmer Object
     ps = PorterStemmer()
     # docId (int) -> docNo (str) map
@@ -227,7 +227,7 @@ if __name__ == '__main__':
     doclist = sorted(os.listdir(coll_path))
     total = len(doclist)
     # block size is the number of FILES to be processed per sub-index, make it 700 for submission
-    block_size = 300
+    block_size = 700
     sub_index_no = 1
     temp_indexfile = 'C'+str(c_no)+'tempindex'
     temp_olfile = 'C'+str(c_no)+'tempol'
@@ -237,8 +237,8 @@ if __name__ == '__main__':
         filecount += 1
         f = os.path.join(coll_path, file)
         # UNSKIP THIS FILE IF IT IS ENSURED THAT IS ASCII-ENCODED, ELSE SKIP IT
-        if(file=='ap890520'): 
-            continue
+        # if(file=='ap890520'): 
+        #     continue
         # to create smaller indices, only for testing purposes
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
@@ -446,5 +446,5 @@ if __name__ == '__main__':
     for i in range(0, len(fs)):
         fs[i].close()
     # check end time and print elapsed time
-    end = time.time()
-    print(end - start)
+    # end = time.time()
+    # print(end - start)

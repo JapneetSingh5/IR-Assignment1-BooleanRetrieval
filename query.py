@@ -34,7 +34,7 @@ def c5_decode(x):
             k = k*128 + (readByte-128)
     if(k==2):
         return pl
-    while(i<len(x)):
+    while(i+k<=len(x)):
         block = x[i:i+k]
         i+=k
         block_val = int(block, 2)
@@ -43,7 +43,7 @@ def c5_decode(x):
         else: 
             pl.append(b+block_val)
     excess_element = 0
-    while(i+8<len(x)):
+    while(i+8<=len(x)):
         byte = x[i:i+8]
         readByte = int(byte, 2)
         i+=8
