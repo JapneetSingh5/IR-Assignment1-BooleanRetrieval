@@ -87,14 +87,12 @@ def c5_encode(pl):
     comp3 = ''.join([format_k.format(x-b) for x in pl[0:cutOff]])
     if(cutOff==len(pl)):
         to_write = comp1+comp2+comp3
-        padding = (8 - (len(to_write)%8))%8
-        return to_write+('1'*padding)
+        return to_write
     else: 
         comp4 = [['{0:08b}'.format(x) for x in c1_encode(ele)] for ele in pl[cutOff:]]
         comp4 = ''.join([''.join(x) for x in comp4])
         to_write = comp1+comp2+comp3+('1'*k)+comp4
-        padding = (8 - (len(to_write)%8))%8
-        return to_write+('1'*padding)
+        return to_write
 
 
 # write_to_dict_c<0|1|2|3> functions are used only while writing to sub-inverted index files

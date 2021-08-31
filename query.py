@@ -43,7 +43,7 @@ def c5_decode(x):
         else: 
             pl.append(b+block_val)
     excess_element = 0
-    while(i+8<=len(x)):
+    while(i+8<len(x)):
         byte = x[i:i+8]
         readByte = int(byte, 2)
         i+=8
