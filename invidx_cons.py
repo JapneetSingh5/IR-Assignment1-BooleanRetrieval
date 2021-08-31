@@ -71,9 +71,18 @@ def c5_encode(pl):
         cutOff += 1
     if(len(pl)>1):
         k = math.floor(math.log2(maxEle-b+2)) + 1
-    while(cutOff<len(pl) and pl[cutOff]<=maxEle and pl[cutOff]>=b):
+    while(cutOff<len(pl)):
+        if(pl[cutOff]<=maxEle and pl[cutOff]>=b):
         # print(pl[cutOff], pl[cutOff]-b, math.floor(math.log2(pl[cutOff]-b)) + 1, k)
-        cutOff+=1
+            cutOff+=1
+        elif(pl[cutOff]<b and math.floor(math.log2(maxEle-pl[cutOff]+2)) + 1 == k):
+            b=pl[cutOff]
+            cutOff+=1
+        elif(pl[cutOff]>maxEle and math.floor(math.log2(pl[cutOff]-b+2)) + 1 == k):
+            maxEle = pl[cutOff]
+            cutOff+=1
+        else: 
+            break
     format_k = '{0:0'+str(k)+'b}'
     comp1 = ''.join(['{0:08b}'.format(x) for x in c1_encode(b)])
     comp2 = ''.join(['{0:08b}'.format(x) for x in c1_encode(k)])
@@ -218,7 +227,7 @@ if __name__ == '__main__':
     doclist = sorted(os.listdir(coll_path))
     total = len(doclist)
 
-    block_size = 10
+    block_size = 100
     sub_index_no = 1
     temp_indexfile = 'C'+str(c_no)+'tempindex'
     temp_dictfile = 'C'+str(c_no)+'tempdictfile'
@@ -232,7 +241,7 @@ if __name__ == '__main__':
             continue
         # if(filecount<600):
         #     continue
-        if(filecount>1):
+        if(filecount>4):
             break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
