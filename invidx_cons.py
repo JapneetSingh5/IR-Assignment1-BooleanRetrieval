@@ -8,6 +8,7 @@ import os
 import json
 import string
 import time
+import math
 
 def def_value():
     #default value for docId->doc mapping dictionary, ideally shold never be needed
@@ -51,6 +52,51 @@ def c2_encode(x):
     encoded += temp1
     encoded += temp2
     return encoded
+
+def c5_encode(pl):
+    b = pl[0]
+    maxEle = pl[0]
+    k = 2
+    cutOff = 0
+    if(len(pl)==1):
+        comp1 = ['{0:08b}'.format(x) for x in c1_encode(b)]
+        comp2 = ['{0:08b}'.format(x) for x in c1_encode(k)]
+        return(''.join(comp1)+''.join(comp2)+'11'*(cutOff+1))
+        # print(b,k,['{0:08b}'.format(x) for x in c1_encode(b)])
+    while(cutOff<len(pl) and (cutOff+1)*100/len(pl)<80):
+        b = min(b, pl[cutOff])
+        # k = max(math.floor(math.log2(pl[cutOff]-b)) + 1, k)
+        maxEle = max(maxEle, pl[cutOff])
+        # print(cutOff)
+        cutOff += 1
+    if(len(pl)>1):
+        k = math.floor(math.log2(maxEle-b+2)) + 1
+    while(cutOff<len(pl) and pl[cutOff]<=maxEle and pl[cutOff]>=b):
+        # print(pl[cutOff], pl[cutOff]-b, math.floor(math.log2(pl[cutOff]-b)) + 1, k)
+        cutOff+=1
+    format_k = '{0:0'+str(k)+'b}'
+    comp1 = ''.join(['{0:08b}'.format(x) for x in c1_encode(b)])
+    comp2 = ''.join(['{0:08b}'.format(x) for x in c1_encode(k)])
+    comp3 = ''.join([format_k.format(x-b) for x in pl[0:cutOff]])
+    if(cutOff==len(pl)):
+        # print(b,k,['{0:08b}'.format(x) for x in c1_encode(b)], ['{0:08b}'.format(x) for x in c1_encode(cutOff+1)], ['{0:06b}'.format(x-b) for x in pl[1:cutOff]])
+        to_write = comp1+comp2+comp3
+        padding = (8 - (len(to_write)%8))%8
+        return to_write+('1'*padding)
+    else: 
+        # print(b,k,['{0:08b}'.format(x) for x in c1_encode(b)], ['{0:08b}'.format(x) for x in c1_encode(cutOff+1)], ['{0:06b}'.format(x-b) for x in pl[1:cutOff]], pl[cutOff:])
+        # print(pl[cutOff:])
+        comp4 = [['{0:08b}'.format(x) for x in c1_encode(ele)] for ele in pl[cutOff:]]
+        comp4 = ''.join([''.join(x) for x in comp4])
+        # print(comp4)
+        to_write = comp1+comp2+comp3+('1'*k)+comp4
+        padding = (8 - (len(to_write)%8))%8
+        return to_write+('1'*padding)
+    # comp1 = ['{0:08b}'.format(x) for x in c1_encode(b)]
+    # comp2 = ['{0:08b}'.format(x) for x in c1_encode(k)]
+    # comp3 = ['{0:06b}'.format(x-b) for x in pl[1:cutOff]]
+    # return(''.join(comp1)+''.join(comp2)+''.join(comp3))
+
 
 def write_dict_to_file_c0(d, file, log_dict):
     c_offset = 0
@@ -124,7 +170,7 @@ def write_dict_to_file(c_no, d, file, log_dict):
     elif(c_no==4):
         return {}
     elif(c_no==5):
-        return {}
+        return write_dict_to_file_c0(d, file, log_dict)
     else: 
         return {}
     
@@ -151,7 +197,7 @@ if __name__ == '__main__':
     c_no = int(sys.argv[4])
     xml_tags_info = sys.argv[5]
 
-    if(c_no>=4):
+    if(c_no==4 or c_no>5 or c_no<0):
         print(not_implemented)
         exit()
 
@@ -172,7 +218,7 @@ if __name__ == '__main__':
     doclist = sorted(os.listdir(coll_path))
     total = len(doclist)
 
-    block_size = 300
+    block_size = 10
     sub_index_no = 1
     temp_indexfile = 'C'+str(c_no)+'tempindex'
     temp_dictfile = 'C'+str(c_no)+'tempdictfile'
@@ -186,7 +232,7 @@ if __name__ == '__main__':
             continue
         # if(filecount<600):
         #     continue
-        if(filecount>20):
+        if(filecount>1):
             break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
@@ -351,10 +397,38 @@ if __name__ == '__main__':
     elif(c_no==4):
         print(not_implemented)
     elif(c_no==5):
-        print(not_implemented)
+        for key in offsetAndLength.keys():
+            if(key=='DocIdMapLength'):
+                continue
+            offsetAndLength[key][0]=c_offset
+            pl = []
+            for i in range(0, len(tempols)):
+                if(key not in tempols[i]):
+                    continue
+                offset = tempols[i][key][0]
+                readLen = tempols[i][key][1]
+                subIndex = fs[i]
+                subIndex.seek(offset)
+                subList = subIndex.read(readLen).decode()
+                subList = subList.split(',')
+                subList = [int(ele) for ele in subList]
+                pl.extend(subList)
+            print(pl)
+            to_write = c5_encode(pl)
+            print(to_write)
+            padding = (8 - (len(to_write)%8))%8
+            to_write+=('1'*padding)
+            # print(to_write)
+            bytesList = [to_write[i:i+8] for i in range(0, len(to_write), 8)]
+            bytesList = [int(ele, 2) for ele in bytesList]
+            c_offset+=len(bytesList)
+            offsetAndLength[key][1]=len(bytesList)
+            destFile.write(bytearray(bytesList)) 
+            print(key, 'done')                      
     else: 
         print(not_implemented)   
 
+    print('out')
     with open(index_file+'.dict', "w") as fp:
         json.dump(offsetAndLength,fp) 
 

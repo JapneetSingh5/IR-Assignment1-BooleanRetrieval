@@ -9,6 +9,62 @@ import os
 import string
 import time
 
+def c5_decode(x):
+    pl=[]
+    i = 0
+    b = 0
+    k = 0
+    while(True):
+        byte = x[i:i+8]
+        # print(byte)
+        readByte = int(byte, 2)
+        # print(readByte)
+        i+=8
+        if(readByte<128):
+            b = b*128 + readByte
+            break
+        else:
+            b = b*128 + (readByte-128)
+    # print(b)
+    while(True):
+        byte = x[i:i+8]
+        # print(byte)
+        readByte = int(byte, 2)
+        # print(readByte)
+        i+=8
+        if(readByte<128):
+            k = k*128 + readByte
+            break
+        else:
+            k = k*128 + (readByte-128)
+    # print(k)
+    # pl.append(b)
+    if(k==2):
+        return pl
+    while(i<len(x)):
+        block = x[i:i+k]
+        # print(block)
+        i+=k
+        block_val = int(block, 2)
+        if(block_val == (2**k - 1)):
+            break
+        else: 
+            pl.append(b+block_val)
+    excess_element = 0
+    while(i+8<=len(x)):
+        byte = x[i:i+8]
+        # print(byte)
+        readByte = int(byte, 2)
+        # print(readByte)
+        i+=8
+        if(readByte<128):
+            excess_element = excess_element*128 + readByte
+            pl.append(excess_element)
+            excess_element = 0
+        else:
+            excess_element = excess_element*128 + (readByte-128)
+    return pl
+
 def create_lists_to_intersect(c_no, query, indexfile):
     # print(query)
     lists_to_intersect = []
@@ -92,9 +148,17 @@ def create_lists_to_intersect(c_no, query, indexfile):
                 strList1 = strList1.split(',')
                 term_list = [int(ele) for ele in strList1]
                 lists_to_intersect.append(term_list)
-        elif(c_no==4 or c_no==5 or c_no>5 or c_no<0):
+        elif(c_no==4 or c_no>5 or c_no<0):
             print('not implemented')
             exit()
+        elif(c_no==5):
+            offset = offsetAndLength[term][0]
+            with open(indexfile, "rb") as f:
+                f.seek(offset)
+                comp = list(f.read(offsetAndLength[term][1]))
+                comp = ''.join(['{0:08b}'.format(x) for x in comp])
+                uncomp = c5_decode(comp)
+                lists_to_intersect.append(uncomp)
     return sorted(lists_to_intersect, key=len)
 
 
