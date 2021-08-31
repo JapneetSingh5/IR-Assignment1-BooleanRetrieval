@@ -227,7 +227,7 @@ if __name__ == '__main__':
     doclist = sorted(os.listdir(coll_path))
     total = len(doclist)
 
-    block_size = 100
+    block_size = 300
     sub_index_no = 1
     temp_indexfile = 'C'+str(c_no)+'tempindex'
     temp_dictfile = 'C'+str(c_no)+'tempdictfile'
@@ -241,8 +241,8 @@ if __name__ == '__main__':
             continue
         # if(filecount<600):
         #     continue
-        if(filecount>4):
-            break
+        # if(filecount>4):
+        #     break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
         docs = soup.find_all('doc')
@@ -422,9 +422,9 @@ if __name__ == '__main__':
                 subList = subList.split(',')
                 subList = [int(ele) for ele in subList]
                 pl.extend(subList)
-            print(pl)
+            # print(pl)
             to_write = c5_encode(pl)
-            print(to_write)
+            # print(to_write)
             padding = (8 - (len(to_write)%8))%8
             to_write+=('1'*padding)
             # print(to_write)
@@ -433,11 +433,11 @@ if __name__ == '__main__':
             c_offset+=len(bytesList)
             offsetAndLength[key][1]=len(bytesList)
             destFile.write(bytearray(bytesList)) 
-            print(key, 'done')                      
+            # print(key, 'done')                      
     else: 
         print(not_implemented)   
 
-    print('out')
+
     with open(index_file+'.dict', "w") as fp:
         json.dump(offsetAndLength,fp) 
 
