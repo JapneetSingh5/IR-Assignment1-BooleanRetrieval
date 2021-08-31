@@ -16,34 +16,26 @@ def c5_decode(x):
     k = 0
     while(True):
         byte = x[i:i+8]
-        # print(byte)
         readByte = int(byte, 2)
-        # print(readByte)
         i+=8
         if(readByte<128):
             b = b*128 + readByte
             break
         else:
             b = b*128 + (readByte-128)
-    # print(b)
     while(True):
         byte = x[i:i+8]
-        # print(byte)
         readByte = int(byte, 2)
-        # print(readByte)
         i+=8
         if(readByte<128):
             k = k*128 + readByte
             break
         else:
             k = k*128 + (readByte-128)
-    # print(k)
-    # pl.append(b)
     if(k==2):
         return pl
     while(i<len(x)):
         block = x[i:i+k]
-        # print(block)
         i+=k
         block_val = int(block, 2)
         if(block_val == (2**k - 1)):
@@ -53,9 +45,7 @@ def c5_decode(x):
     excess_element = 0
     while(i+8<=len(x)):
         byte = x[i:i+8]
-        # print(byte)
         readByte = int(byte, 2)
-        # print(readByte)
         i+=8
         if(readByte<128):
             excess_element = excess_element*128 + readByte
@@ -66,10 +56,8 @@ def c5_decode(x):
     return pl
 
 def create_lists_to_intersect(c_no, query, indexfile):
-    # print(query)
     lists_to_intersect = []
     for term in query:
-        # print(term)
         term_list = []
         if term not in offsetAndLength:
             term_list=[]
@@ -112,7 +100,6 @@ def create_lists_to_intersect(c_no, query, indexfile):
                     nextByte = f.read(1)
                     uncomp += '{0:08b}'.format(int.from_bytes(nextByte, sys.byteorder))
                     i+=1
-                # print(uncomp)
                 j = 0
                 while(j<offsetAndLength[term][1]*8):
                     c_len = 0

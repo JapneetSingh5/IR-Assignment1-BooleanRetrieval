@@ -11,7 +11,7 @@ import time
 import math
 
 def def_value():
-    #default value for docId->doc mapping dictionary, ideally shold never be needed
+    #default value for docId->docNO mapping dictionary, ideally shold never be needed
     return "Not Present"
 
 def c1_encode(n):
@@ -54,6 +54,8 @@ def c2_encode(x):
     return encoded
 
 def c5_encode(pl):
+    #input: a postings list 
+    #output: encoding of the postings list, in string form
     b = pl[0]
     maxEle = pl[0]
     k = 2
@@ -62,18 +64,14 @@ def c5_encode(pl):
         comp1 = ['{0:08b}'.format(x) for x in c1_encode(b)]
         comp2 = ['{0:08b}'.format(x) for x in c1_encode(k)]
         return(''.join(comp1)+''.join(comp2)+'11'*(cutOff+1))
-        # print(b,k,['{0:08b}'.format(x) for x in c1_encode(b)])
     while(cutOff<len(pl) and (cutOff+1)*100/len(pl)<80):
         b = min(b, pl[cutOff])
-        # k = max(math.floor(math.log2(pl[cutOff]-b)) + 1, k)
         maxEle = max(maxEle, pl[cutOff])
-        # print(cutOff)
         cutOff += 1
     if(len(pl)>1):
         k = math.floor(math.log2(maxEle-b+2)) + 1
     while(cutOff<len(pl)):
         if(pl[cutOff]<=maxEle and pl[cutOff]>=b):
-        # print(pl[cutOff], pl[cutOff]-b, math.floor(math.log2(pl[cutOff]-b)) + 1, k)
             cutOff+=1
         elif(pl[cutOff]<b and math.floor(math.log2(maxEle-pl[cutOff]+2)) + 1 == k):
             b=pl[cutOff]
@@ -88,25 +86,19 @@ def c5_encode(pl):
     comp2 = ''.join(['{0:08b}'.format(x) for x in c1_encode(k)])
     comp3 = ''.join([format_k.format(x-b) for x in pl[0:cutOff]])
     if(cutOff==len(pl)):
-        # print(b,k,['{0:08b}'.format(x) for x in c1_encode(b)], ['{0:08b}'.format(x) for x in c1_encode(cutOff+1)], ['{0:06b}'.format(x-b) for x in pl[1:cutOff]])
         to_write = comp1+comp2+comp3
         padding = (8 - (len(to_write)%8))%8
         return to_write+('1'*padding)
     else: 
-        # print(b,k,['{0:08b}'.format(x) for x in c1_encode(b)], ['{0:08b}'.format(x) for x in c1_encode(cutOff+1)], ['{0:06b}'.format(x-b) for x in pl[1:cutOff]], pl[cutOff:])
-        # print(pl[cutOff:])
         comp4 = [['{0:08b}'.format(x) for x in c1_encode(ele)] for ele in pl[cutOff:]]
         comp4 = ''.join([''.join(x) for x in comp4])
-        # print(comp4)
         to_write = comp1+comp2+comp3+('1'*k)+comp4
         padding = (8 - (len(to_write)%8))%8
         return to_write+('1'*padding)
-    # comp1 = ['{0:08b}'.format(x) for x in c1_encode(b)]
-    # comp2 = ['{0:08b}'.format(x) for x in c1_encode(k)]
-    # comp3 = ['{0:06b}'.format(x-b) for x in pl[1:cutOff]]
-    # return(''.join(comp1)+''.join(comp2)+''.join(comp3))
 
 
+# write_to_dict_c<0|1|2|3> functions are used only while writing to sub-inverted index files
+# the final write to <indexfile>.idx is managed seperately at the end
 def write_dict_to_file_c0(d, file, log_dict):
     c_offset = 0
     with open(file, 'wb') as f:
@@ -167,6 +159,8 @@ def write_dict_to_file_c3(d, file, log_dict):
             f.write(to_write)
     return log_dict
 
+# this function is used only while writing to sub-inverted index files
+# the final write to <indexfile>.idx is managed seperately at the end
 def write_dict_to_file(c_no, d, file, log_dict):
     if(c_no==0):
         return write_dict_to_file_c0(d, file, log_dict)
@@ -186,85 +180,99 @@ def write_dict_to_file(c_no, d, file, log_dict):
 
 
 if __name__ == '__main__':
-
+    # start the timer
     start = time.time()
-
+    # Porter Stemmer Object
     ps = PorterStemmer()
+    # docId (int) -> docNo (str) map
     docId = defaultdict(def_value)
+    # dictionary containing postings list, word (str) -> postings (list) map
     postings = defaultdict(list)
+    # count maintains the number of documents processed (not files)
     count = 0
+    # filecount maintains the number of files processed
+    filecount = 0
+    # lastDoc maintains the id of lastDoc every word in the vocabulary appeared in
     lastDoc = defaultdict(lambda: 0)
+    # offsetAndLength acts as the dictionary, stores the file offset and length of list where the list is stored in the index
     offsetAndLength = {}
-    
-    not_implemented = 'not implemented'
+    # delimiter list 
     exclist = ',.:;"(){}[]\n`\''
     table = str.maketrans(exclist, ' '*len(exclist), '')
-
+    # processing command line arguments
     coll_path = sys.argv[1]
     index_file = sys.argv[2]
     stopword_file = sys.argv[3]
     c_no = int(sys.argv[4])
     xml_tags_info = sys.argv[5]
-
+    # check for non implemented compression schemes or invalid inputs\        
+    not_implemented = 'not implemented'
     if(c_no==4 or c_no>5 or c_no<0):
         print(not_implemented)
         exit()
-
+    # get the list of xml tags to be indexed from xml_tags_info file, leave out DOCNO
     xmltags = []
     with open(xml_tags_info, 'r') as f:
         for line in f:
             temp = line.rstrip()
             if(temp!='DOCNO'):
                 xmltags.append(temp.lower())
-    
+    # get the list of stopwords to remain unindexed from stopwords file
     stopwords = []
     with open(stopword_file, 'r') as f:
         for line in f:
             temp = line.rstrip()
             stopwords.append(temp.lower())
-
-    filecount = 0
+    # get list of files to be processed and their count
     doclist = sorted(os.listdir(coll_path))
     total = len(doclist)
-
+    # block size is the number of FILES to be processed per sub-index
     block_size = 300
     sub_index_no = 1
     temp_indexfile = 'C'+str(c_no)+'tempindex'
-    temp_dictfile = 'C'+str(c_no)+'tempdictfile'
     temp_olfile = 'C'+str(c_no)+'tempol'
     tempOL = defaultdict(lambda: [0,0])
 
     for file in doclist:
         filecount += 1
         f = os.path.join(coll_path, file)
+        # UNSKIP THIS FILE IF IT IS ENSURED THAT IS ASCII-ENCODED, ELSE SKIP IT
         if(file=='ap890520'): 
             continue
+        # to create smaller indices, only for testing purposes
         # if(filecount<600):
         #     continue
-        # if(filecount>4):
-        #     break
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
+        # create list of all docs in the current file by searching <DOC> tags
         docs = soup.find_all('doc')
-        print('Processing ', f, '( ', filecount, ' out of ', total, ' processed )')
+        # print('Processing ', f, '( ', filecount, ' out of ', total, ' processed )')
         for doc in docs:
             count += 1
+            # get DOCNO, i.e. the unique identifier for given doc
             docNo = doc.find('docno')
+            # some docno are padded by spaces within DOCNO tags, remove the extra whitespace
             id = docNo.get_text().replace(' ', '')
+            # DOCID, an integer -> DOCNO, a string
             docId[count] = id
+            # iterate through xml tags in the xml tags list
             for xmltag in xmltags:
+                # find all matching tags in the current DOC
                 tag_list = doc.find_all(xmltag)
                 if(len(tag_list)>0):
                     for tag_obj in tag_list:
                         textBlob = tag_obj.get_text()
+                        # remove stopwords
                         for stopword in stopwords:
                             textBlob.replace(stopword, '')
+                        # split at delimiters
                         temp = textBlob.translate(str.maketrans(table)).split()
                         for word in temp:
                             if(word=='' or word==' ' or word=='  '):
                                 continue
                             if(word in stopwords):
                                 continue
+                            # stem word using porter stemmer
                             stemmed = ps.stem(word.lower(), 0, len(word)-1)
                             if(lastDoc[stemmed]==0):
                                 # term has been encountered for the first time, give current docId as its element in the list
@@ -272,9 +280,10 @@ if __name__ == '__main__':
                                 postings[stemmed].append(count)
                                 lastDoc[stemmed]=count   
                             elif(lastDoc[stemmed]!=count):
-                                # term has been encountered before
+                                # term has been encountered before, append gap to postings list
                                 postings[stemmed].append(count-lastDoc[stemmed]) 
                                 lastDoc[stemmed]=count 
+        # if we reach block size limit, write the sub-invindex and sub-dictionary to a file
         if(filecount%block_size==0):
             tempOL = write_dict_to_file(c_no, postings, temp_indexfile+str(sub_index_no), tempOL)            
             postings.clear()
@@ -283,7 +292,7 @@ if __name__ == '__main__':
                 f.write(sub_index_OL.encode())
             tempOL.clear()
             sub_index_no+=1
-
+    # if postings list is non empty, write the sub-invindex and sub-dictionary to a file
     if(len(postings)>0):
         tempOL = write_dict_to_file(c_no, postings, temp_indexfile+str(sub_index_no), tempOL) 
         postings.clear()
@@ -292,16 +301,21 @@ if __name__ == '__main__':
             f.write(sub_index_OL.encode())
         tempOL.clear()
 
+    #now, merge the sub-inv indices created till now to <indexfile>.idx and create an overall dictionary
     destFile = open(index_file+'.idx', "wb")
     destFile.write(c_no.to_bytes(1, sys.byteorder))
     c_offset = 1
+
     # encodedJSON = json.dumps(docId).encode('utf-8')
     # destFile.write(encodedJSON)
     # json.dump(docId, destFile)
+
     offsetAndLength['DocIdMapLength'] = docId
+
     # offsetAndLength['DocIdMapLength'] = [1, destFile.tell()]
     # c_offset += destFile.tell()
 
+    # list of file pointers for sub-indices
     tempols = []
     fs=[]
     for i in range(1, sub_index_no + 1):
@@ -315,6 +329,7 @@ if __name__ == '__main__':
             f = open(temp_indexfile+str(i), 'rb')
             fs.append(f)
 
+    # compress and write to file according to the required c_no
     if(c_no==0):
         for key in offsetAndLength.keys():
             if(key=='DocIdMapLength'):
@@ -422,27 +437,23 @@ if __name__ == '__main__':
                 subList = subList.split(',')
                 subList = [int(ele) for ele in subList]
                 pl.extend(subList)
-            # print(pl)
             to_write = c5_encode(pl)
-            # print(to_write)
             padding = (8 - (len(to_write)%8))%8
             to_write+=('1'*padding)
-            # print(to_write)
             bytesList = [to_write[i:i+8] for i in range(0, len(to_write), 8)]
             bytesList = [int(ele, 2) for ele in bytesList]
             c_offset+=len(bytesList)
             offsetAndLength[key][1]=len(bytesList)
-            destFile.write(bytearray(bytesList)) 
-            # print(key, 'done')                      
+            destFile.write(bytearray(bytesList))                 
     else: 
         print(not_implemented)   
 
-
+    # write dictionary to <indexfile>.dict filee
     with open(index_file+'.dict', "w") as fp:
         json.dump(offsetAndLength,fp) 
-
+    # close all open file objects
     for i in range(0, len(fs)):
         fs[i].close()
-    
+    # check end time and print elapsed time
     end = time.time()
     print(end - start)
