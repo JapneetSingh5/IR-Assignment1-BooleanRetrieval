@@ -197,8 +197,9 @@ if __name__ == '__main__':
     # offsetAndLength acts as the dictionary, stores the file offset and length of list where the list is stored in the index
     offsetAndLength = {}
     # delimiter list 
-    exclist = ',.:;"(){}[]\n`\''
-    table = str.maketrans(exclist, ' '*len(exclist), '')
+    exclude = ',.:;"(){}[]\n`\''
+    table = str.maketrans(exclude, ' '*len(exclude), '')
+    stopword_dict = defaultdict(lambda: 0)
     # processing command line arguments
     coll_path = sys.argv[1]
     index_file = sys.argv[2]
@@ -223,10 +224,11 @@ if __name__ == '__main__':
         for line in f:
             temp = line.rstrip()
             stopwords.append(temp.lower())
+            stopword_dict[temp.lower()] = 1
     # get list of files to be processed and their count
     doclist = sorted(os.listdir(coll_path))
     total = len(doclist)
-    # block size is the number of FILES to be processed per sub-index
+    # block size is the number of FILES to be processed per sub-index, make it 700 for submission
     block_size = 300
     sub_index_no = 1
     temp_indexfile = 'C'+str(c_no)+'tempindex'
@@ -240,8 +242,6 @@ if __name__ == '__main__':
         if(file=='ap890520'): 
             continue
         # to create smaller indices, only for testing purposes
-        # if(filecount<600):
-        #     continue
         xmldoc = open(f, 'r')
         soup = BeautifulSoup(xmldoc, 'html.parser')
         # create list of all docs in the current file by searching <DOC> tags
@@ -270,10 +270,10 @@ if __name__ == '__main__':
                         for word in temp:
                             if(word=='' or word==' ' or word=='  '):
                                 continue
-                            if(word in stopwords):
-                                continue
                             # stem word using porter stemmer
                             stemmed = ps.stem(word.lower(), 0, len(word)-1)
+                            if(stopword_dict[stemmed]==1):
+                                continue
                             if(lastDoc[stemmed]==0):
                                 # term has been encountered for the first time, give current docId as its element in the list
                                 offsetAndLength[stemmed] = [0,0]
@@ -306,14 +306,7 @@ if __name__ == '__main__':
     destFile.write(c_no.to_bytes(1, sys.byteorder))
     c_offset = 1
 
-    # encodedJSON = json.dumps(docId).encode('utf-8')
-    # destFile.write(encodedJSON)
-    # json.dump(docId, destFile)
-
     offsetAndLength['DocIdMapLength'] = docId
-
-    # offsetAndLength['DocIdMapLength'] = [1, destFile.tell()]
-    # c_offset += destFile.tell()
 
     # list of file pointers for sub-indices
     tempols = []

@@ -29,23 +29,25 @@ def VBDecode(bytes):
 # destFile.close()
 
 
-with open("c1_index_test.idx", "rb") as f:
-        decoded = 0
-        while(True):
-            byte = f.read(1)
-            if(not byte):
-                break
-            readByte = int.from_bytes(byte, sys.byteorder)
-            if(readByte<128):
-                decoded = decoded*128 + readByte
-                print(decoded)
-                decoded = 0
-            else:
-                decoded = decoded*128 + (readByte-128)
+# with open("c1_index_test.idx", "rb") as f:
+#         decoded = 0
+#         while(True):
+#             byte = f.read(1)
+#             if(not byte):
+#                 break
+#             readByte = int.from_bytes(byte, sys.byteorder)
+#             if(readByte<128):
+#                 decoded = decoded*128 + readByte
+#                 print(decoded)
+#                 decoded = 0
+#             else:
+#                 decoded = decoded*128 + (readByte-128)
 
 # txtFile =  open("c1_index_test.txt", "w")
 # for i in range(0, 1000):
 #     txtFile.write(str(i))
+
+print(VBEncode(111119))
         
 
 

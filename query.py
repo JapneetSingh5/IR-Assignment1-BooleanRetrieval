@@ -165,18 +165,12 @@ if __name__ == '__main__':
     offsetAndLength = json.load(f)
     docId = {}
     docId = offsetAndLength['DocIdMapLength']
-    # offsetAndLength.pop('DocIdMapLength', None)
-    # DocIdMapOffset = offsetAndLength['DocIdMapLength'][0]
-    # DocIdMapLength = offsetAndLength['DocIdMapLength'][1]
     f.close()
 
     stopwords = set()
     with open(indexfile, "rb") as f:
         c_no = f.read(1)
         c_no = int.from_bytes(c_no, sys.byteorder)
-        # jsonEncoded = f.read(DocIdMapLength)
-        # jsonEncoded.decode()
-        # docId= json.loads(jsonEncoded)
 
 
     if(c_no==-1):
