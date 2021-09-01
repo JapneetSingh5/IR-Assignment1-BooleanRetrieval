@@ -227,7 +227,7 @@ if __name__ == '__main__':
     doclist = sorted(os.listdir(coll_path))
     total = len(doclist)
     # block size is the number of FILES to be processed per sub-index, make it 700 for submission
-    block_size = 700
+    block_size = 600
     sub_index_no = 1
     temp_indexfile = 'C'+str(c_no)+'tempindex'
     temp_olfile = 'C'+str(c_no)+'tempol'
